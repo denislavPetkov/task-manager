@@ -6,7 +6,7 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 	<style>
 		tr.done {
-		background-color: #eaf4ff;
+		background-color: #ce9ea4;
 		}
 	</style>
 </head>
@@ -54,6 +54,10 @@
 									'<td><button onclick="editTask(\'' + task.title + '\')">Edit</button></td>' +
 									'<td><button onclick="deleteTask(\'' + task.title + '\')">Delete</button></td>';
 						document.querySelector("table tbody").appendChild(tr);
+
+						if (task.completed) {
+							tr.classList.add("done");
+						}
 					}
 
 					// Add event listeners to the filter input fields
