@@ -60,22 +60,33 @@ func (c *controller) postNewTask(gc *gin.Context) {
 		return
 	}
 
+	deadline := gc.PostForm("deadline")
+	if strings.TrimSpace(deadline) == "" {
+		gc.HTML(http.StatusBadRequest, "newTask.html", gin.H{"error": "Empty deadline"})
+		return
+	}
+
+	formattedDeadline, err := getFormattedDeadline(deadline)
+	if err != nil {
+		gc.HTML(http.StatusInternalServerError, "newTask.html", gin.H{"error": "Server error"})
+		return
+	}
+
 	category := gc.PostForm("category")
 	tags := gc.PostFormArray("tags[]")
-	date := time.Now().Format("02-Jan-2006")
 
 	task := model.Task{
 		Title:       title,
 		Description: description,
 		Category:    category,
 		Tags:        tags,
-		Deadline:    date,
+		Deadline:    formattedDeadline,
 		Completed:   false,
 	}
 
 	currentUser := c.getUserFromSession(gc)
 
-	err := c.taskDb.AddTask(currentUser, task)
+	err = c.taskDb.AddTask(currentUser, task)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			gc.HTML(http.StatusBadRequest, "newTask.html", gin.H{"error": "Task with that title already exists"})

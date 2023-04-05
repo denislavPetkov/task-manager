@@ -38,13 +38,12 @@
 			<tbody>
 				<script>
 					var tasks = JSON.parse("{{ .Tasks }}");
-					console.log(tasks);
 				
 					for (var i = 0; i < tasks.length; i++) {
 						var task = tasks[i];
 
 						var tr = document.createElement("tr");
-						tr.innerHTML = '<td><input type="checkbox" onclick="markAsDone(task)" ' +
+						tr.innerHTML = '<td><input type="checkbox" onclick="markAsDone(this, ' + i + ')" ' +
 									(task.completed ? 'checked' : '') + '></td>' +
 									"<td>" + task.title + "</td>" +
 									"<td>" + task.deadline + "</td>" +
@@ -75,7 +74,9 @@
 						window.location.href = window.location.href + "/new";
 					}
 					
-					function markAsDone(task) {
+					function markAsDone(checkbox, index) {
+						var task = tasks[index];
+
 						$.ajax({
         					url: window.location.href+ '/completed/' + task.title,
         					type: 'POST',
@@ -115,15 +116,23 @@
 					
 					function filterTasks() {
 						var category = categoryFilter.value.toLowerCase();
-						var tags = tagsFilter.value.toLowerCase().split(",");
-						
+						var tags = tagsFilter.value.toLowerCase().split(",").map(tag => tag.trim());
+
 						var tasks = document.querySelectorAll("table tbody tr");
 						for (var i = 0; i < tasks.length; i++) {
 							var task = tasks[i];
-							var categoryText = task.querySelector("td:nth-of-type(4)").textContent.toLowerCase();
-							var tagsText = task.querySelector("td:nth-of-type(5)").textContent.toLowerCase();
-							
-							if (categoryText.includes(category) && tagsMatch(tagsText, tags)) {
+							var categoryText = task.querySelector("td:nth-of-type(5)").textContent.toLowerCase();
+							var tagsText = task.querySelector("td:nth-of-type(6)").textContent.toLowerCase();
+
+							var tagsMatch = true;
+							for (var j = 0; j < tags.length; j++) {
+								if (tags[j] !== "" && !tagsText.includes(tags[j])) {
+									tagsMatch = false;
+									break;
+								}
+							}
+
+							if (categoryText.includes(category) && tagsMatch) {
 								task.style.display = "";
 							} else {
 								task.style.display = "none";

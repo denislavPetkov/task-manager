@@ -7,6 +7,4 @@ const (
 	SessionStoreName = "session"
 
 	CsrfKey = "csrf"
-
-	DateFormat = "02-Jan-2006"
 )
