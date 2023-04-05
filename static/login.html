@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Login Page</title>
+	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+</head>
+<body>
+	<div class="container">
+		<h2>Login</h2>
+		<form class="center" method="POST">
+			
+			<label for="username">Username:</label>
+			<input type="text" id="username" name="username" required>
+
+			<label for="password">Password:</label>
+			<input type="password" id="password" name="password" required>
+
+			<input type="hidden" name="_csrf" value="{{ .csrf }}">
+			<button type="submit">Login</button>
+
+			{{if .error}}
+			<div class="error">
+				{{.error}}
+			</div>
+			{{end}}
+		</form>
+
+		<form action="/register" method="GET">
+			<button type="submit">Register</button>
+		</form>
+	</div>
+</body>
+</html>

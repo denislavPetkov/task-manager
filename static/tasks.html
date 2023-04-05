@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Tasks</title>
+	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<style>
+		tr.done {
+		background-color: #eaf4ff;
+		}
+	</style>
+</head>
+<body>
+	<h1>Tasks</h1>
+	<div>
+		<button onclick="logout()">Logout</button>
+		<button onclick="addNewTask()">Add New Task</button>
+	</div>
+	<div id="filter-container">
+		<label for="category-filter">Category:</label>
+		<input type="text" id="category-filter" placeholder="Filter by category...">
+		<label for="tags-filter">Tags:</label>
+		<input type="text" id="tags-filter" placeholder="Filter by tags...">
+	</div>
+	<div id="task-container">
+		<table>
+			<thead>
+				<tr>
+					<th>Done</th>
+					<th>Title</th>
+					<th>Deadline</th>
+					<th>Description</th>
+					<th>Category</th>
+					<th>Tags</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<script>
+					var tasks = JSON.parse("{{ .Tasks }}");
+					console.log(tasks);
+				
+					for (var i = 0; i < tasks.length; i++) {
+						var task = tasks[i];
+
+						var tr = document.createElement("tr");
+						tr.innerHTML = '<td><input type="checkbox" onclick="markAsDone(task)" ' +
+									(task.completed ? 'checked' : '') + '></td>' +
+									"<td>" + task.title + "</td>" +
+									"<td>" + task.deadline + "</td>" +
+									"<td>" + task.description + "</td>" +
+									"<td>" + task.category + "</td>" +
+									"<td>" + (task.tags ? task.tags.join(", ") : "") + "</td>" +
+									'<td><button onclick="editTask(\'' + task.title + '\')">Edit</button></td>' +
+									'<td><button onclick="deleteTask(\'' + task.title + '\')">Delete</button></td>';
+						document.querySelector("table tbody").appendChild(tr);
+					}
+
+					// Add event listeners to the filter input fields
+					var categoryFilter = document.getElementById("category-filter");
+					categoryFilter.addEventListener("input", filterTasks);
+					
+					var tagsFilter = document.getElementById("tags-filter");
+					tagsFilter.addEventListener("input", filterTasks);
+				
+					function logout() {
+						window.location.href = "/logout";
+					}
+				
+					function addNewTask() {
+						window.location.href = window.location.href + "/new";
+					}
+					
+					function markAsDone(task) {
+						$.ajax({
+        					url: window.location.href+ '/completed/' + task.title,
+        					type: 'POST',
+							headers: {
+            					'X-CSRF-Token': "{{ .csrf }}"
+        					},
+							data: {
+								completed: !task.completed
+							},
+        					success: function(result) {
+								task.completed = result.completed;
+								$("td:contains('" + task.title + "')").parent().toggleClass("done", result.completed);
+							}
+						});
+					}
+
+					function deleteTask(title) {
+    					$.ajax({
+        					url: window.location.href+ '/delete/' + title,
+        					type: 'DELETE',
+							headers: {
+            					'X-CSRF-Token': "{{ .csrf }}"
+        					},
+        					success: function(result) {
+								$("td:contains('" + title + "')").parent().remove();
+							}
+						});
+					}
+
+					function editTask(title) {
+						var task = tasks.find(function(n) {
+							return n.title === title;
+						});
+						var url = window.location.href + '/edit?title=' + encodeURIComponent(title) + '&task=' + encodeURIComponent(JSON.stringify(task));
+						window.location.href = url;
+					}
+					
+					function filterTasks() {
+						var category = categoryFilter.value.toLowerCase();
+						var tags = tagsFilter.value.toLowerCase().split(",");
+						
+						var tasks = document.querySelectorAll("table tbody tr");
+						for (var i = 0; i < tasks.length; i++) {
+							var task = tasks[i];
+							var categoryText = task.querySelector("td:nth-of-type(4)").textContent.toLowerCase();
+							var tagsText = task.querySelector("td:nth-of-type(5)").textContent.toLowerCase();
+							
+							if (categoryText.includes(category) && tagsMatch(tagsText, tags)) {
+								task.style.display = "";
+							} else {
+								task.style.display = "none";
+							}
+						}
+					}
+					
+					function tagsMatch(text, tags) {
+						for (var i = 0; i < tags.length; i++) {
+							if (tags[i].trim() != "" && !text.includes(tags[i].trim())) {
+								return false;
+							}
+						}
+						return true;
+					}
+				</script>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

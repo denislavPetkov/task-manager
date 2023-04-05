@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Task</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+</head>
+<body>
+    <h1>New Task</h1>
+    {{ if .error }}
+    <div class="error">
+        {{ .error }}
+    </div>
+    {{ end }}
+    {{ if .success }}
+    <div class="success">
+        {{ .success }}
+    </div>
+    <meta http-equiv="refresh" content="0.2; URL=/tasks">
+    {{ end }}   
+    <p>* denotes required field</p>
+    <form method="post" action="">
+        <label for="title">Title:*</label><br>
+        <input type="text" id="title" name="title" required><br>
+        <label for="description">Description:*</label><br>
+        <textarea id="description" name="description" required></textarea><br>
+        <label for="category">Category:</label><br>
+        <input type="text" id="category" name="category"><br>
+        <label for="tags">Tags:</label><br>
+        <input type="hidden" name="_csrf" value="{{ .csrf }}">
+        <div id="tags-container">
+            <input type="text" class="tag-input" name="tags[]" autocomplete="off">
+        </div>
+        <button type="button" id="add-tag-button">Add Tag</button><br><br>
+        <button type="submit">Save Task</button>
+    </form>
+
+    <script>
+        var addTagButton = document.getElementById('add-tag-button');
+        var tagsContainer = document.getElementById('tags-container');
+
+        addTagButton.addEventListener('click', function() {
+            var tagInput = document.createElement('input');
+            tagInput.type = 'text';
+            tagInput.className = 'tag-input';
+            tagInput.name = 'tags[]';
+            tagInput.autocomplete = 'off';
+            tagsContainer.appendChild(tagInput);
+            tagsContainer.appendChild(document.createElement('br'));
+        });
+
+        function goBack() {
+            window.location.href = "/tasks";
+        }
+    </script>
+     <button onclick="goBack()">Go back to tasks</button>
+</body>
+</html>
