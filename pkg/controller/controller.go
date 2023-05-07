@@ -40,6 +40,8 @@ func (c *controller) Start() error {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 	})
 
+	c.ginRouter.POST("/audio", c.postAudio)
+
 	c.ginRouter.GET("/register", c.getRegister)
 	c.ginRouter.POST("/register", c.postRegister)
 

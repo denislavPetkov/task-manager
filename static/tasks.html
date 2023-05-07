@@ -4,6 +4,8 @@
 	<title>Tasks</title>
 	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mattdiamond/Recorderjs/dist/recorder.js"></script>
+	<button id="recordButton">Voice command</button>
 </head>
 <body>
 	<h1>Tasks</h1>
@@ -11,6 +13,11 @@
 		<button onclick="logout()">Logout</button>
 		<button onclick="addNewTask()">Add New Task</button>
 	</div>
+	{{ if .error }}
+    <div class="error">
+    {{ .error }}
+    </div>
+    {{ end }}
 	<div id="filter-container">
 		<label for="category-filter">Category:</label>
 		<input type="text" id="category-filter" placeholder="Filter by category...">
@@ -162,6 +169,59 @@
 						}
 						return true;
 					}
+
+					var audioContext;
+					var audioStream;
+					var recorder;
+					var isRecording = false;
+					var recordButton = document.getElementById("recordButton");
+
+					navigator.mediaDevices.getUserMedia({ audio: true })
+					.then(function(stream) {
+						audioStream = stream;
+						audioContext = new AudioContext();
+						var input = audioContext.createMediaStreamSource(stream);
+						recorder = new Recorder(input);
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+					});
+
+					function toggleRecording() {
+					if (isRecording) {
+						recorder && recorder.stop();
+						recordButton.innerText = "Record";
+						recorder && recorder.exportWAV(uploadAudio);
+					} else {
+						recorder && recorder.clear();
+						recorder && recorder.record();
+						recordButton.innerText = "Stop";
+					}
+					isRecording = !isRecording;
+					}
+
+					function uploadAudio(blob) {
+						var xhr = new XMLHttpRequest();
+						xhr.open('POST', '/audio', true);
+						xhr.setRequestHeader('X-CSRF-Token', '{{ .csrf }}');
+						xhr.setRequestHeader('Content-Type', 'audio/wav');
+						xhr.onload = function(e) {
+							if (this.status == 302) {
+								var response = JSON.parse(this.responseText);
+								var redirectURL = response.redirect;
+								console.log('Audio uploaded successfully, redirecting to:', redirectURL);
+								if (response.edit){
+									editTask(response.edit)
+								} else if (redirectURL){
+									window.location.href = redirectURL; // redirect to the new page
+								}
+							}
+						};
+						xhr.send(blob);
+					}
+
+					recordButton.addEventListener("click", toggleRecording);
+
 				</script>
 			</tbody>
 		</table>
