@@ -1,7 +1,7 @@
 package constants
 
 const (
-	SessionCookieTtl = 600
+	SessionCookieTtl = 60000
 	SessionUserKey   = "user"
 	SessionIdKey     = "id"
 	SessionStoreName = "session"

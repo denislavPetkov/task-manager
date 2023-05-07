@@ -4,11 +4,6 @@
 	<title>Tasks</title>
 	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-	<style>
-		tr.done {
-		background-color: #ce9ea4;
-		}
-	</style>
 </head>
 <body>
 	<h1>Tasks</h1>
@@ -21,6 +16,12 @@
 		<input type="text" id="category-filter" placeholder="Filter by category...">
 		<label for="tags-filter">Tags:</label>
 		<input type="text" id="tags-filter" placeholder="Filter by tags...">
+		<label for="done-filter">Done:</label>
+		<select id="done-filter">
+			<option value="all" selected>All</option>
+			<option value="done">Done</option>
+			<option value="not-done">Not Done</option>
+		</select>
 	</div>
 	<div id="task-container">
 		<table>
@@ -46,12 +47,12 @@
 						tr.innerHTML = '<td><input type="checkbox" onclick="markAsDone(this, ' + i + ')" ' +
 									(task.completed ? 'checked' : '') + '></td>' +
 									"<td>" + task.title + "</td>" +
-									"<td>" + task.deadline + "</td>" +
+									"<td>" + new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ /g, '-') + "</td>" +
 									"<td>" + task.description + "</td>" +
 									"<td>" + task.category + "</td>" +
 									"<td>" + (task.tags ? task.tags.join(", ") : "") + "</td>" +
 									'<td><button onclick="editTask(\'' + task.title + '\')">Edit</button></td>' +
-									'<td><button onclick="deleteTask(\'' + task.title + '\')">Delete</button></td>';
+									'<td><button onclick="deleteTask(\'' + task.title + '\', ' + i + ')">Delete</button></td>';
 						document.querySelector("table tbody").appendChild(tr);
 
 						if (task.completed) {
@@ -65,7 +66,10 @@
 					
 					var tagsFilter = document.getElementById("tags-filter");
 					tagsFilter.addEventListener("input", filterTasks);
-				
+
+					var doneFilter = document.getElementById("done-filter");
+					doneFilter.addEventListener("input", filterTasks);
+
 					function logout() {
 						window.location.href = "/logout";
 					}
@@ -93,7 +97,7 @@
 						});
 					}
 
-					function deleteTask(title) {
+					function deleteTask(title,rowIndex) {
     					$.ajax({
         					url: window.location.href+ '/delete/' + title,
         					type: 'DELETE',
@@ -101,7 +105,7 @@
             					'X-CSRF-Token': "{{ .csrf }}"
         					},
         					success: function(result) {
-								$("td:contains('" + title + "')").parent().remove();
+								document.querySelector("table tbody").deleteRow(rowIndex);
 							}
 						});
 					}
@@ -110,19 +114,22 @@
 						var task = tasks.find(function(n) {
 							return n.title === title;
 						});
-						var url = window.location.href + '/edit?title=' + encodeURIComponent(title) + '&task=' + encodeURIComponent(JSON.stringify(task));
+						localStorage.setItem(title, JSON.stringify(task));
+						var url = window.location.href + '/edit/' + encodeURIComponent(title);
 						window.location.href = url;
 					}
 					
 					function filterTasks() {
 						var category = categoryFilter.value.toLowerCase();
 						var tags = tagsFilter.value.toLowerCase().split(",").map(tag => tag.trim());
+						var done = doneFilter.value;
 
 						var tasks = document.querySelectorAll("table tbody tr");
 						for (var i = 0; i < tasks.length; i++) {
 							var task = tasks[i];
 							var categoryText = task.querySelector("td:nth-of-type(5)").textContent.toLowerCase();
 							var tagsText = task.querySelector("td:nth-of-type(6)").textContent.toLowerCase();
+							var doneValue = task.querySelector("td:nth-of-type(1) input").checked;
 
 							var tagsMatch = true;
 							for (var j = 0; j < tags.length; j++) {
@@ -132,7 +139,14 @@
 								}
 							}
 
-							if (categoryText.includes(category) && tagsMatch) {
+							var doneMatch = true;
+							if (done === "done") {
+							doneMatch = doneValue === true;
+							} else if (done === "not-done") {
+							doneMatch = doneValue === false;
+							}
+
+							if (categoryText.includes(category) && tagsMatch && doneMatch) {
 								task.style.display = "";
 							} else {
 								task.style.display = "none";

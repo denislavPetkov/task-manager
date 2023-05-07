@@ -21,21 +21,21 @@
   <p>* denotes required field</p>
 	<form method="post" action="">
 		<label for="title">Title:</label>
-		<input type="text" id="title" name="title" value="{{ .Title }}" disabled>
-        <label for="date">Date:</label>
-        <input type="text" id="date" name="date" value="{{ .Date }}" disabled>
+		<input type="text" id="title" name="title" value="{{ .task.Title }}" disabled>
+    <label for="deadline">Deadline:*</label><br>
+    <input type="date" id="deadline" name="deadline" value="{{ .task.Deadline }}" required><br>
 		<label for="description">Description*:</label>
-		<textarea id="description" name="description" required style="font-size: 16px;">{{ .Description }}</textarea>
+		<textarea id="description" name="description" required style="font-size: 16px;">{{ .task.Description }}</textarea>
 		<label for="category">Category:</label>
-		<input type="text" id="category" name="category" value="{{ .Category }}">
+		<input type="text" id="category" name="category" value="{{ .task.Category }}">
 		<label for="tags">Tags:</label>
         <div id="tags-container">
-        {{ range $index, $tag := .Tags }}
-            <input type="text" class="tag-input" name="tags[]" value="{{ $tag }}" autocomplete="off">
+          {{ range $index, $tag := .task.Tags }}
+          <input type="text" class="tag-input" name="tags[]" value="{{ $tag }}" autocomplete="off">
         {{ end }}
-        <input type="text" class="tag-input" name="tags[]" autocomplete="off">
         </div>
         <button type="button" id="add-tag-button">Add Tag</button>
+    <input type="hidden" id="completed" name="completed">
     <input type="hidden" name="_csrf" value="{{ .csrf }}">
 		<button type="submit">Save</button>
 	</form>
@@ -47,14 +47,40 @@
 
         console.log('Task retrieved from localStorage:', task);
 
-        if (task) {
+        if (task && !"{{ .success }}") {
           document.querySelector('#title').value = task.title;
-          document.querySelector('#date').value = task.date;
+          document.querySelector('#deadline').value = task.deadline;
           document.querySelector('#description').value = task.description;
           document.querySelector('#category').value = task.category;
-          if (task.tags !== null) {
-            document.querySelector('#tags').value = task.tags.join(',');
-          }
+          document.querySelector('#completed').value = task.completed;
+
+            var tagsInput = document.querySelector('#tags-container');
+            for (var i = 0; i < task.tags.length; i++) {
+              var container = document.createElement('div');
+
+              var tagInput = document.createElement('input');
+              tagInput.type = 'text';
+              tagInput.name = 'tags[]';
+              tagInput.value = task.tags[i];
+
+              var removeButton = document.createElement('button');
+              removeButton.classList.add('remove-tag-button');
+              removeButton.textContent = 'x';
+              removeButton.addEventListener('click', function() {
+                this.parentElement.remove();
+              });
+
+              tagInput.classList.add('tag-input');
+              tagInput.autocomplete = 'off';
+              container.classList.add('tag-input-container');
+
+              
+              tagsInput.appendChild(container);
+              
+              container.appendChild(tagInput);
+              container.appendChild(removeButton);
+            }
+          
         } else {
           // Handle error if task not found
         }
@@ -63,13 +89,27 @@
         var tagsContainer = document.getElementById('tags-container');
 
         addTagButton.addEventListener('click', function() {
+            var container = document.createElement('div');
+            container.classList.add('tag-input-container');
+
             var tagInput = document.createElement('input');
             tagInput.type = 'text';
             tagInput.className = 'tag-input';
             tagInput.name = 'tags[]';
             tagInput.autocomplete = 'off';
-            tagsContainer.appendChild(tagInput);
-            tagsContainer.appendChild(document.createElement('br'));
+
+            var removeButton = document.createElement('button');
+              removeButton.classList.add('remove-tag-button');
+              removeButton.textContent = 'x';
+              removeButton.addEventListener('click', function() {
+                this.parentElement.remove();
+              });
+
+            tagsContainer.appendChild(container);
+
+            container.appendChild(tagInput);
+            container.appendChild(removeButton);
+            container.appendChild(document.createElement('br'));
         });
 
         function cancel() {

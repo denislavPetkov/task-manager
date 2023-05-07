@@ -8,7 +8,7 @@
     <h1>New Task</h1>
     {{ if .error }}
     <div class="error">
-        {{ .error }}
+    {{ .error }}
     </div>
     {{ end }}
     {{ if .success }}
@@ -20,17 +20,19 @@
     <p>* denotes required field</p>
     <form method="post" action="">
         <label for="title">Title:*</label><br>
-        <input type="text" id="title" name="title" required><br>
+        <input type="text" id="title" name="title" value="{{ .task.Title }}" required><br>
         <label for="deadline">Deadline:*</label><br>
-        <input type="date" id="deadline" name="deadline" required><br>
+        <input type="date" id="deadline" name="deadline"  value="{{ .task.Deadline }}" required><br>
         <label for="description">Description:*</label><br>
-        <textarea id="description" name="description" required></textarea><br>
+        <textarea id="description" name="description" required>{{ .task.Description }}</textarea><br>
         <label for="category">Category:</label><br>
-        <input type="text" id="category" name="category"><br>
+        <input type="text" id="category" name="category"  value="{{ .task.Category }}"><br>
         <label for="tags">Tags:</label><br>
         <input type="hidden" name="_csrf" value="{{ .csrf }}">
         <div id="tags-container">
-            <input type="text" class="tag-input" name="tags[]" autocomplete="off">
+            {{ range $index, $tag := .task.Tags }}
+            <input type="text" class="tag-input" name="tags[]" value="{{ $tag }}" autocomplete="off">
+          {{ end }}
         </div>
         <button type="button" id="add-tag-button">Add Tag</button><br><br>
         <button type="submit">Save Task</button>
@@ -41,13 +43,27 @@
         var tagsContainer = document.getElementById('tags-container');
 
         addTagButton.addEventListener('click', function() {
+            var container = document.createElement('div');
+            container.classList.add('tag-input-container');
+
             var tagInput = document.createElement('input');
             tagInput.type = 'text';
             tagInput.className = 'tag-input';
             tagInput.name = 'tags[]';
             tagInput.autocomplete = 'off';
-            tagsContainer.appendChild(tagInput);
-            tagsContainer.appendChild(document.createElement('br'));
+
+            var removeButton = document.createElement('button');
+              removeButton.classList.add('remove-tag-button');
+              removeButton.textContent = 'x';
+              removeButton.addEventListener('click', function() {
+                this.parentElement.remove();
+              });
+
+            tagsContainer.appendChild(container);
+
+            container.appendChild(tagInput);
+            container.appendChild(removeButton);
+            container.appendChild(document.createElement('br'));
         });
 
         function goBack() {

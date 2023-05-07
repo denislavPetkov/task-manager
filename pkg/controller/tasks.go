@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/denislavpetkov/task-manager/pkg/constants"
 	"github.com/denislavpetkov/task-manager/pkg/model"
@@ -61,17 +60,6 @@ func (c *controller) postNewTask(gc *gin.Context) {
 	}
 
 	deadline := gc.PostForm("deadline")
-	if strings.TrimSpace(deadline) == "" {
-		gc.HTML(http.StatusBadRequest, "newTask.html", gin.H{"error": "Empty deadline"})
-		return
-	}
-
-	formattedDeadline, err := getFormattedDeadline(deadline)
-	if err != nil {
-		gc.HTML(http.StatusInternalServerError, "newTask.html", gin.H{"error": "Server error"})
-		return
-	}
-
 	category := gc.PostForm("category")
 	tags := gc.PostFormArray("tags[]")
 
@@ -80,23 +68,40 @@ func (c *controller) postNewTask(gc *gin.Context) {
 		Description: description,
 		Category:    category,
 		Tags:        tags,
-		Deadline:    formattedDeadline,
+		Deadline:    deadline,
 		Completed:   false,
 	}
 
 	currentUser := c.getUserFromSession(gc)
 
-	err = c.taskDb.AddTask(currentUser, task)
+	err := c.taskDb.AddTask(currentUser, task)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			gc.HTML(http.StatusBadRequest, "newTask.html", gin.H{"error": "Task with that title already exists"})
+			if err != nil {
+				gc.HTML(http.StatusInternalServerError, "newTask.html", gin.H{
+					"error": "Server error",
+					"task":  task,
+				})
+				return
+			}
+
+			gc.HTML(http.StatusBadRequest, "newTask.html", gin.H{
+				"error": "Task with that title already exists",
+				"task":  task,
+			})
 			return
 		}
-		gc.HTML(http.StatusInternalServerError, "newTask.html", gin.H{"error": "Server error"})
+		gc.HTML(http.StatusInternalServerError, "newTask.html", gin.H{
+			"error": "Server error",
+			"task":  task,
+		})
 		return
 	}
 
-	gc.HTML(http.StatusOK, "newTask.html", gin.H{"success": "Added a Task successful!"})
+	gc.HTML(http.StatusOK, "newTask.html", gin.H{
+		"success": "Added a Task successful!",
+		"task":    task,
+	})
 }
 
 func (c *controller) deleteTask(gc *gin.Context) {
@@ -129,8 +134,14 @@ func (c *controller) postUpdateTask(gc *gin.Context) {
 
 	category := gc.PostForm("category")
 	tags := gc.PostFormArray("tags[]")
-	isCompleted := gc.GetBool("isCompleted")
-	date := time.Now().Format("02-Jan-2006")
+	isCompletedString := gc.PostForm("completed")
+	isCompleted, err := strconv.ParseBool(isCompletedString)
+	if err != nil {
+		gc.HTML(http.StatusInternalServerError, "editTask.html", gin.H{"error": "Server error"})
+		return
+	}
+
+	deadline := gc.PostForm("deadline")
 
 	currentUser := c.getUserFromSession(gc)
 
@@ -139,17 +150,20 @@ func (c *controller) postUpdateTask(gc *gin.Context) {
 		Description: description,
 		Category:    category,
 		Tags:        tags,
-		Deadline:    date,
+		Deadline:    deadline,
 		Completed:   isCompleted,
 	}
 
-	err := c.taskDb.UpdateTask(currentUser, title, task)
+	err = c.taskDb.UpdateTask(currentUser, title, task)
 	if err != nil {
 		gc.HTML(http.StatusInternalServerError, "editTask.html", gin.H{"error": "Server error"})
 		return
 	}
 
-	gc.HTML(http.StatusOK, "editTask.html", gin.H{"success": "Added a Task successful!"})
+	gc.HTML(http.StatusOK, "editTask.html", gin.H{
+		"success": "Added a Task successful!",
+		"task":    task,
+	})
 }
 
 func (c *controller) postCompleteTask(gc *gin.Context) {

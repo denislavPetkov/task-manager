@@ -2,7 +2,7 @@ package task
 
 import (
 	"fmt"
-	"strings"
+	"regexp"
 
 	"github.com/denislavpetkov/task-manager/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,7 +19,7 @@ func (m *mongodbInstance) CreateCollection(name string) error {
 	// The name of the collection to create. See Naming Restrictions.
 	err := m.mongodbDatabase.CreateCollection(ctx, name)
 	if err != nil {
-		if strings.Contains(err.Error(), "Collection already exists") {
+		if match, _ := regexp.MatchString(`Collection .* already exists`, err.Error()); match {
 			return nil
 		}
 		return err
