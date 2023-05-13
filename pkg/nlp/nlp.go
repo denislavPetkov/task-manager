@@ -35,8 +35,6 @@ func init() {
 func GetCommand(commandString string) Command {
 	command := nl.P(commandString)
 	if cm, ok := command.(*Command); ok {
-		fmt.Println("Success")
-		fmt.Printf("%#v\n", cm)
 		return *cm
 	} else {
 		fmt.Println("Failed")

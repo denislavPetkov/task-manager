@@ -25,10 +25,10 @@ func (c *controller) getLogin(gc *gin.Context) {
 }
 
 func (c *controller) postLogin(gc *gin.Context) {
-	username := gc.PostForm("username")
+	email := gc.PostForm("email")
 	password := gc.PostForm("password")
 
-	hashedPassword, err := c.userDb.Get(context.TODO(), username)
+	hashedPassword, err := c.userDb.Get(context.TODO(), email)
 	if err != nil {
 		if err.Error() == database.InvalidKeyErr {
 			gc.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Wrong credentials"})
@@ -44,14 +44,14 @@ func (c *controller) postLogin(gc *gin.Context) {
 		return
 	}
 
-	sessionToken := crypto.GenerateToken(username)
+	sessionToken := crypto.GenerateToken(email)
 
 	session := sessions.Default(gc)
 	session.Set(constants.SessionIdKey, sessionToken)
-	session.Set(constants.SessionUserKey, username)
+	session.Set(constants.SessionUserKey, email)
 	session.Save()
 
-	err = c.taskDb.CreateCollection(username)
+	err = c.taskDb.CreateCollection(email)
 	if err != nil {
 		gc.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Wrong credentials"})
 		return

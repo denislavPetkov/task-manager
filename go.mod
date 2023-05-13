@@ -3,6 +3,7 @@ module github.com/denislavpetkov/task-manager
 go 1.19
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.0
 	github.com/rakyll/openai-go v1.0.9

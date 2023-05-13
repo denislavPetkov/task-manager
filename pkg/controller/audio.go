@@ -42,12 +42,7 @@ func (c *controller) postAudio(gc *gin.Context) {
 	}
 
 	voiceCommand := strings.ToLower(resp.Text)
-	log.Println(voiceCommand)
-
-	voiceCommand = "new task"
-
 	command := nlp.GetCommand(voiceCommand)
-	fmt.Println(command)
 
 	switch {
 	case slices.Contains(nlp.CreateCommands, command.Command):
@@ -60,12 +55,6 @@ func (c *controller) postAudio(gc *gin.Context) {
 		})
 
 	case slices.Contains(nlp.DeleteCommands, command.Command):
-		gc.JSON(http.StatusFound, gin.H{
-			"redirect": fmt.Sprintf("/tasks/delete/%s", command.TaskTitle),
-		})
-
-	case slices.Contains(nlp.MarkAsCommands, command.Command):
-
 		gc.JSON(http.StatusFound, gin.H{
 			"redirect": fmt.Sprintf("/tasks/delete/%s", command.TaskTitle),
 		})

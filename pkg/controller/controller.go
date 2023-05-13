@@ -52,6 +52,9 @@ func (c *controller) Start() error {
 	authenticated.Use(middleware.Authentication())
 	{
 
+		authenticated.GET("/passChange", c.getPasswordChange)
+		authenticated.POST("/passChange", c.postPasswordChange)
+
 		authenticated.GET("/tasks/edit/:title", c.getUpdateTask)
 		authenticated.POST("/tasks/edit/:title", c.postUpdateTask)
 		authenticated.DELETE("/tasks/delete/:title", c.deleteTask)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/denislavpetkov/task-manager/pkg/constants"
 	"github.com/denislavpetkov/task-manager/pkg/crypto"
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,15 @@ func (c *controller) getRegister(gc *gin.Context) {
 func (c *controller) postRegister(gc *gin.Context) {
 	csrfToken := csrf.GetToken(gc)
 
-	username := gc.PostForm("username")
+	email := gc.PostForm("email")
+	if !govalidator.IsEmail(email) {
+		gc.HTML(http.StatusBadRequest, "register.html", gin.H{
+			"error":           "Email not valid",
+			constants.CsrfKey: csrfToken,
+		})
+		return
+	}
+
 	password := gc.PostForm("password")
 	confirmPassword := gc.PostForm("confirm_password")
 
@@ -31,7 +40,7 @@ func (c *controller) postRegister(gc *gin.Context) {
 		return
 	}
 
-	usernameExists, err := c.userDb.Exists(context.TODO(), username)
+	emailExists, err := c.userDb.Exists(context.TODO(), email)
 	if err != nil {
 		gc.HTML(http.StatusInternalServerError, "register.html", gin.H{
 			"error":           "Server error",
@@ -40,9 +49,9 @@ func (c *controller) postRegister(gc *gin.Context) {
 		return
 	}
 
-	if usernameExists == 1 {
+	if emailExists == 1 {
 		gc.HTML(http.StatusBadRequest, "register.html", gin.H{
-			"error":           "Username exists",
+			"error":           "Email Address exists",
 			constants.CsrfKey: csrfToken,
 		})
 		return
@@ -57,7 +66,7 @@ func (c *controller) postRegister(gc *gin.Context) {
 		return
 	}
 
-	err = c.userDb.Set(context.TODO(), username, hashedPassword, 0)
+	err = c.userDb.Set(context.TODO(), email, hashedPassword, 0)
 	if err != nil {
 		gc.HTML(http.StatusInternalServerError, "register.html", gin.H{
 			"error":           "Server error",

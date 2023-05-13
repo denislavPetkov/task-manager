@@ -1,23 +1,77 @@
 <!DOCTYPE html>
 <html>
+<style>
+	main {
+		display: flex;
+		justify-content: right;
+		height: 100%;
+		position: relative;
+	}
+
+	main .notification {
+		position: relative;
+		width: 10%;
+		height: 10%;
+	}
+
+	main .notification svg {
+		width: 10%;
+		height: 10%;
+	}
+
+	.notification-container {
+		position: fixed;
+		top: 20px;
+		right: 20px;
+		z-index: 9999;
+	}
+
+	.notification-window {
+		background-color: #fff;
+		border: 1px solid #ccc;
+		padding: 10px;
+		box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+		margin-bottom: 10px;
+	}
+</style>
+
 <head>
 	<title>Tasks</title>
 	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mattdiamond/Recorderjs/dist/recorder.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/mattdiamond/Recorderjs/dist/recorder.js"></script>
 	<button id="recordButton">Voice command</button>
 </head>
+
 <body>
 	<h1>Tasks</h1>
+	<main rel="main">
+		<div class="notification-container" id="notificationContainer">
+			<!-- Notification windows will be appended here -->
+		</div>
+		<div class="notification" id="notification">
+			<svg viewbox="0 0 166 197">
+				<path
+					d="M82.8652955,196.898522 C97.8853137,196.898522 110.154225,184.733014 110.154225,169.792619 L55.4909279,169.792619 C55.4909279,184.733014 67.8452774,196.898522 82.8652955,196.898522 L82.8652955,196.898522 Z">
+				</path>
+				</path>
+				<path
+					d="M146.189736,135.093562 L146.189736,82.040478 C146.189736,52.1121695 125.723173,27.9861651 97.4598237,21.2550099 L97.4598237,14.4635396 C97.4598237,6.74321823 90.6498186,0 82.8530327,0 C75.0440643,0 68.2462416,6.74321823 68.2462416,14.4635396 L68.2462416,21.2550099 C39.9707102,27.9861651 19.5163297,52.1121695 19.5163297,82.040478 L19.5163297,135.093562 L0,154.418491 L0,164.080956 L165.706065,164.080956 L165.706065,154.418491 L146.189736,135.093562 Z">
+				</path>
+			</svg>
+			<span id="notifications"></span>
+		</div>
+	</main>
 	<div>
 		<button onclick="logout()">Logout</button>
 		<button onclick="addNewTask()">Add New Task</button>
+		<button onclick="changePassword()">Change Password</button>
 	</div>
 	{{ if .error }}
-    <div class="error">
-    {{ .error }}
-    </div>
-    {{ end }}
+	<div class="error">
+		{{ .error }}
+	</div>
+	{{ end }}
 	<div id="filter-container">
 		<label for="category-filter">Category:</label>
 		<input type="text" id="category-filter" placeholder="Filter by category...">
@@ -46,20 +100,20 @@
 			<tbody>
 				<script>
 					var tasks = JSON.parse("{{ .Tasks }}");
-				
+
 					for (var i = 0; i < tasks.length; i++) {
 						var task = tasks[i];
 
 						var tr = document.createElement("tr");
 						tr.innerHTML = '<td><input type="checkbox" onclick="markAsDone(this, ' + i + ')" ' +
-									(task.completed ? 'checked' : '') + '></td>' +
-									"<td>" + task.title + "</td>" +
-									"<td>" + new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ /g, '-') + "</td>" +
-									"<td>" + task.description + "</td>" +
-									"<td>" + task.category + "</td>" +
-									"<td>" + (task.tags ? task.tags.join(", ") : "") + "</td>" +
-									'<td><button onclick="editTask(\'' + task.title + '\')">Edit</button></td>' +
-									'<td><button onclick="deleteTask(\'' + task.title + '\', ' + i + ')">Delete</button></td>';
+							(task.completed ? 'checked' : '') + '></td>' +
+							"<td>" + task.title + "</td>" +
+							"<td>" + new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ /g, '-') + "</td>" +
+							"<td>" + task.description + "</td>" +
+							"<td>" + task.category + "</td>" +
+							"<td>" + (task.tags ? task.tags.join(", ") : "") + "</td>" +
+							'<td><button onclick="editTask(\'' + task.title + '\')">Edit</button></td>' +
+							'<td><button onclick="deleteTask(\'' + task.title + '\', ' + i + ')">Delete</button></td>';
 						document.querySelector("table tbody").appendChild(tr);
 
 						if (task.completed) {
@@ -70,7 +124,7 @@
 					// Add event listeners to the filter input fields
 					var categoryFilter = document.getElementById("category-filter");
 					categoryFilter.addEventListener("input", filterTasks);
-					
+
 					var tagsFilter = document.getElementById("tags-filter");
 					tagsFilter.addEventListener("input", filterTasks);
 
@@ -80,52 +134,64 @@
 					function logout() {
 						window.location.href = "/logout";
 					}
-				
+
+					function changePassword() {
+						window.location.href = "/passChange";
+					}
+
 					function addNewTask() {
 						window.location.href = window.location.href + "/new";
 					}
-					
+
 					function markAsDone(checkbox, index) {
 						var task = tasks[index];
 
 						$.ajax({
-        					url: window.location.href+ '/completed/' + task.title,
-        					type: 'POST',
+							url: window.location.href + '/completed/' + task.title,
+							type: 'POST',
 							headers: {
-            					'X-CSRF-Token': "{{ .csrf }}"
-        					},
+								'X-CSRF-Token': "{{ .csrf }}"
+							},
 							data: {
 								completed: !task.completed
 							},
-        					success: function(result) {
+							success: function (result) {
 								task.completed = result.completed;
-								$("td:contains('" + task.title + "')").parent().toggleClass("done", result.completed);
+
+								var table = document.querySelector("table tbody");
+								var rows = table.querySelectorAll("tr");
+								var rowIndex = index; // Replace with the desired row index
+
+								if (rows.length > rowIndex) {
+									var row = rows[rowIndex];
+									row.classList.toggle("done", task.completed);
+								}
 							}
 						});
 					}
 
-					function deleteTask(title,rowIndex) {
-    					$.ajax({
-        					url: window.location.href+ '/delete/' + title,
-        					type: 'DELETE',
+					function deleteTask(title, rowIndex) {
+						$.ajax({
+							url: window.location.href + '/delete/' + title,
+							type: 'DELETE',
 							headers: {
-            					'X-CSRF-Token': "{{ .csrf }}"
-        					},
-        					success: function(result) {
+								'X-CSRF-Token': "{{ .csrf }}"
+							},
+							success: function (result) {
 								document.querySelector("table tbody").deleteRow(rowIndex);
 							}
 						});
 					}
 
 					function editTask(title) {
-						var task = tasks.find(function(n) {
+						var task = tasks.find(function (n) {
 							return n.title === title;
 						});
 						localStorage.setItem(title, JSON.stringify(task));
 						var url = window.location.href + '/edit/' + encodeURIComponent(title);
 						window.location.href = url;
 					}
-					
+
 					function filterTasks() {
 						var category = categoryFilter.value.toLowerCase();
 						var tags = tagsFilter.value.toLowerCase().split(",").map(tag => tag.trim());
@@ -148,9 +214,9 @@
 
 							var doneMatch = true;
 							if (done === "done") {
-							doneMatch = doneValue === true;
+								doneMatch = doneValue === true;
 							} else if (done === "not-done") {
-							doneMatch = doneValue === false;
+								doneMatch = doneValue === false;
 							}
 
 							if (categoryText.includes(category) && tagsMatch && doneMatch) {
@@ -160,7 +226,7 @@
 							}
 						}
 					}
-					
+
 					function tagsMatch(text, tags) {
 						for (var i = 0; i < tags.length; i++) {
 							if (tags[i].trim() != "" && !text.includes(tags[i].trim())) {
@@ -177,27 +243,27 @@
 					var recordButton = document.getElementById("recordButton");
 
 					navigator.mediaDevices.getUserMedia({ audio: true })
-					.then(function(stream) {
-						audioStream = stream;
-						audioContext = new AudioContext();
-						var input = audioContext.createMediaStreamSource(stream);
-						recorder = new Recorder(input);
-					})
-					.catch(function(err) {
-						console.log('Error: ' + err);
-					});
+						.then(function (stream) {
+							audioStream = stream;
+							audioContext = new AudioContext();
+							var input = audioContext.createMediaStreamSource(stream);
+							recorder = new Recorder(input);
+						})
+						.catch(function (err) {
+							console.log('Error: ' + err);
+						});
 
 					function toggleRecording() {
-					if (isRecording) {
-						recorder && recorder.stop();
-						recordButton.innerText = "Record";
-						recorder && recorder.exportWAV(uploadAudio);
-					} else {
-						recorder && recorder.clear();
-						recorder && recorder.record();
-						recordButton.innerText = "Stop";
-					}
-					isRecording = !isRecording;
+						if (isRecording) {
+							recorder && recorder.stop();
+							recordButton.innerText = "Record";
+							recorder && recorder.exportWAV(uploadAudio);
+						} else {
+							recorder && recorder.clear();
+							recorder && recorder.record();
+							recordButton.innerText = "Stop";
+						}
+						isRecording = !isRecording;
 					}
 
 					function uploadAudio(blob) {
@@ -205,14 +271,14 @@
 						xhr.open('POST', '/audio', true);
 						xhr.setRequestHeader('X-CSRF-Token', '{{ .csrf }}');
 						xhr.setRequestHeader('Content-Type', 'audio/wav');
-						xhr.onload = function(e) {
+						xhr.onload = function (e) {
 							if (this.status == 302) {
 								var response = JSON.parse(this.responseText);
 								var redirectURL = response.redirect;
 								console.log('Audio uploaded successfully, redirecting to:', redirectURL);
-								if (response.edit){
+								if (response.edit) {
 									editTask(response.edit)
-								} else if (redirectURL){
+								} else if (redirectURL) {
 									window.location.href = redirectURL; // redirect to the new page
 								}
 							}
@@ -222,9 +288,71 @@
 
 					recordButton.addEventListener("click", toggleRecording);
 
+
+					var tasksWithReminders = [];
+
+					function createTaskNotifications() {
+						setInterval(function () {
+							var currentDatetime = new Date();
+
+							var reminders = 0;
+							tasksWithReminders = [];
+
+							tasks.forEach(function (task) {
+								if (task.completed) {
+									return
+								}
+								var deadlineDatetime = new Date(task.deadline);
+								var timeDiff = deadlineDatetime.getTime() - currentDatetime.getTime();
+								var hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60)); // Convert milliseconds to hours
+
+								if (hoursDiff <= 24 * 6) {
+									reminders++;
+									tasksWithReminders.push([task.title, hoursDiff]);
+								}
+							});
+
+							var notificationsSpan = document.getElementById("notifications");
+							notificationsSpan.innerText = reminders;
+
+						}, 100);
+					}
+
+					createTaskNotifications();
+
+					var notificationContainer = document.getElementById("notificationContainer");
+					var notifications = [];
+
+					notification.addEventListener("click", function () {
+
+						while (notificationContainer.firstChild) {
+							notificationContainer.removeChild(notificationContainer.firstChild);
+						}
+
+						tasksWithReminders.forEach(function (taskInfo) {
+							var notificationWindow = document.createElement("div");
+							notificationWindow.className = "notification-window";
+							notificationWindow.textContent = "Task '" + taskInfo[0] + "' is due in " + Math.floor(taskInfo[1] / 24) + " day(s) and " + (taskInfo[1] % 24) + " hours";
+
+							notificationContainer.appendChild(notificationWindow);
+							notifications.push(notificationWindow);
+
+							setTimeout(function () {
+								var index = notifications.indexOf(notificationWindow);
+								if (index > -1) {
+									notifications.splice(index, 1);
+								}
+
+								notificationContainer.removeChild(notificationWindow);
+							}, 3000);
+						});
+					});
+
+
 				</script>
 			</tbody>
 		</table>
 	</div>
 </body>
+
 </html>

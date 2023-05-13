@@ -1,3 +1,6 @@
+# github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
+## explicit; go 1.13
+github.com/asaskevich/govalidator
 # github.com/boj/redistore v0.0.0-20180917114910-cd5dcc76aeff
 ## explicit
 github.com/boj/redistore
