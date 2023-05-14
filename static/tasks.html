@@ -77,8 +77,6 @@
 	</div>
 </nav>
 
-
-
 <body>
 	{{ if .error }}
 	<div class="error">
@@ -113,8 +111,7 @@
 		</div>
 	</nav>
 
-
-	<table class="table table-hover table-bordered">
+	<table class="table table-hover table-bordered bg-dark">
 		<thead class="table-dark">
 			<tr>
 				<th class="text-center">Done</th>
@@ -142,19 +139,21 @@
 		var task = tasks[i];
 
 		var tr = document.createElement("tr");
+		tr.classList.add("text-light");
+
 		tr.innerHTML = '<td class="text-center"><input type="checkbox" onclick="markAsDone(this, ' + i + ')" ' +
 			(task.completed ? 'checked' : '') + '></td>' +
-			"<td class='text-center'>" + task.title + "</td>" +
+			"<td class='text-center text-light'>" + task.title + "</td>" +
 			"<td class='text-center'>" + new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ /g, '-') + "</td>" +
 			"<td class='text-center'>" + task.description + "</td>" +
 			"<td class='text-center'>" + task.category + "</td>" +
 			"<td class='text-center'>" + (task.tags ? task.tags.join(", ") : "") + "</td>" +
-			'<td class="text-center"><button onclick="editTask(\'' + task.title + '\')">Edit</button></td>' +
-			'<td class="text-center"><button onclick="deleteTask(\'' + task.title + '\', ' + i + ')">Delete</button></td>';
+			'<td class="text-center"><button type="button" class="btn btn-outline-warning" onclick="editTask(\'' + task.title + '\')">Edit</button></td>' +
+			'<td class="text-center"><button type="button" class="btn btn-outline-danger" onclick="deleteTask(\'' + task.title + '\', ' + i + ')">Delete</button></td>';
 		document.querySelector("table tbody").appendChild(tr);
 
 		if (task.completed) {
-			tr.classList.add("done");
+			tr.classList.add("text-decoration-line-through");
 		}
 	}
 
@@ -204,7 +203,7 @@
 
 				if (rows.length > rowIndex) {
 					var row = rows[rowIndex];
-					row.classList.toggle("done", task.completed);
+					row.classList.toggle("text-decoration-line-through", task.completed);
 					updateTaskNotifications();
 				}
 			}
