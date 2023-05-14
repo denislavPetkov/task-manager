@@ -18,6 +18,27 @@ func (c *controller) getPasswordChange(gc *gin.Context) {
 func (c *controller) postPasswordChange(gc *gin.Context) {
 	csrfToken := csrf.GetToken(gc)
 
+	currentPassword := gc.PostForm("currentPassword")
+	email := c.getUserFromSession(gc)
+
+	currentHashedPassword, err := c.userDb.Get(context.TODO(), email)
+	if err != nil {
+		gc.HTML(http.StatusInternalServerError, "changePassword.html", gin.H{
+			"error":           "Server error",
+			constants.CsrfKey: csrfToken,
+		})
+		return
+	}
+
+	err = crypto.IsHashedPasswordCorrect(currentPassword, currentHashedPassword)
+	if err != nil {
+		gc.HTML(http.StatusBadRequest, "changePassword.html", gin.H{
+			"error":           "Wrong current password",
+			constants.CsrfKey: csrfToken,
+		})
+		return
+	}
+
 	password := gc.PostForm("password")
 	confirmPassword := gc.PostForm("confirm_password")
 
@@ -37,8 +58,6 @@ func (c *controller) postPasswordChange(gc *gin.Context) {
 		})
 		return
 	}
-
-	email := c.getUserFromSession(gc)
 
 	err = c.userDb.Set(context.TODO(), email, hashedPassword, 0)
 	if err != nil {

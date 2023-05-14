@@ -63,6 +63,8 @@ func (c *controller) postNewTask(gc *gin.Context) {
 	category := gc.PostForm("category")
 	tags := gc.PostFormArray("tags[]")
 
+	title = strings.ReplaceAll(strings.Trim(title, " "), " ", "-")
+
 	task := model.Task{
 		Title:       title,
 		Description: description,
@@ -161,7 +163,7 @@ func (c *controller) postUpdateTask(gc *gin.Context) {
 	}
 
 	gc.HTML(http.StatusOK, "editTask.html", gin.H{
-		"success": "Added a Task successful!",
+		"success": "Edited a Task successful!",
 		"task":    task,
 	})
 }

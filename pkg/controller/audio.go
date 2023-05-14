@@ -49,14 +49,23 @@ func (c *controller) postAudio(gc *gin.Context) {
 		gc.JSON(http.StatusFound, gin.H{"redirect": "/tasks/new"})
 
 	case slices.Contains(nlp.EditCommands, command.Command):
+		taskTitle := trimTaskTitle(command.TaskTitle)
+
 		gc.JSON(http.StatusFound, gin.H{
-			"redirect": fmt.Sprintf("/tasks/edit/%s", command.TaskTitle),
-			"edit":     command.TaskTitle,
+			"redirect": fmt.Sprintf("/tasks/edit/%s", taskTitle),
+			"edit":     taskTitle,
 		})
 
 	case slices.Contains(nlp.DeleteCommands, command.Command):
+		taskTitle := trimTaskTitle(command.TaskTitle)
+
 		gc.JSON(http.StatusFound, gin.H{
-			"redirect": fmt.Sprintf("/tasks/delete/%s", command.TaskTitle),
+			"redirect": fmt.Sprintf("/tasks/delete/%s", taskTitle),
+			"delete":   taskTitle,
 		})
 	}
+}
+
+func trimTaskTitle(s string) string {
+	return strings.Trim(strings.Trim(s, "."), ",")
 }

@@ -160,7 +160,7 @@
 
 								var table = document.querySelector("table tbody");
 								var rows = table.querySelectorAll("tr");
-								var rowIndex = index; // Replace with the desired row index
+								var rowIndex = index;
 
 								if (rows.length > rowIndex) {
 									var row = rows[rowIndex];
@@ -277,7 +277,23 @@
 								var redirectURL = response.redirect;
 								console.log('Audio uploaded successfully, redirecting to:', redirectURL);
 								if (response.edit) {
-									editTask(response.edit)
+									tasks.forEach(function (task) {
+										if (task.Title === response.delete) {
+											editTask(response.edit)
+											return;
+										}
+									});
+
+									alert("No task with the name '" + response.delete + "' exists.");
+								} else if (response.delete) {
+									tasks.forEach(function (task, i) {
+										if (task.Title === response.delete) {
+											deleteTask(response.delete, i);
+											return;
+										}
+									});
+
+									alert("No task with the name '" + response.delete + "' exists.");
 								} else if (redirectURL) {
 									window.location.href = redirectURL; // redirect to the new page
 								}
@@ -332,7 +348,15 @@
 						tasksWithReminders.forEach(function (taskInfo) {
 							var notificationWindow = document.createElement("div");
 							notificationWindow.className = "notification-window";
-							notificationWindow.textContent = "Task '" + taskInfo[0] + "' is due in " + Math.floor(taskInfo[1] / 24) + " day(s) and " + (taskInfo[1] % 24) + " hours";
+
+							var hours = taskInfo[1] % 24;
+							var days = Math.floor(taskInfo[1] / 24)
+
+							if (hours < 0 || days < 0) {
+								notificationWindow.textContent = "Task '" + taskInfo[0] + "' is overdue by " + Math.abs(days) + " day(s) and " + Math.abs(hours) + " hours";
+							} else {
+								notificationWindow.textContent = "Task '" + taskInfo[0] + "' is due in " + Math.floor(taskInfo[1] / 24) + " day(s) and " + (taskInfo[1] % 24) + " hours";
+							}
 
 							notificationContainer.appendChild(notificationWindow);
 							notifications.push(notificationWindow);

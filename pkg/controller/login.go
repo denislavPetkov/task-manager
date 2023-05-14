@@ -25,22 +25,33 @@ func (c *controller) getLogin(gc *gin.Context) {
 }
 
 func (c *controller) postLogin(gc *gin.Context) {
+	csrfToken := csrf.GetToken(gc)
+
 	email := gc.PostForm("email")
 	password := gc.PostForm("password")
 
 	hashedPassword, err := c.userDb.Get(context.TODO(), email)
 	if err != nil {
 		if err.Error() == database.InvalidKeyErr {
-			gc.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Wrong credentials"})
+			gc.HTML(http.StatusBadRequest, "login.html", gin.H{
+				"error":           "Wrong credentials",
+				constants.CsrfKey: csrfToken,
+			})
 			return
 		}
-		gc.HTML(http.StatusInternalServerError, "login.html", gin.H{"error": "Server error"})
+		gc.HTML(http.StatusInternalServerError, "login.html", gin.H{
+			"error":           "Server error",
+			constants.CsrfKey: csrfToken,
+		})
 		return
 	}
 
 	err = crypto.IsHashedPasswordCorrect(password, hashedPassword)
 	if err != nil {
-		gc.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Wrong credentials"})
+		gc.HTML(http.StatusBadRequest, "login.html", gin.H{
+			"error":           "Wrong credentials",
+			constants.CsrfKey: csrfToken,
+		})
 		return
 	}
 
@@ -53,7 +64,10 @@ func (c *controller) postLogin(gc *gin.Context) {
 
 	err = c.taskDb.CreateCollection(email)
 	if err != nil {
-		gc.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Wrong credentials"})
+		gc.HTML(http.StatusBadRequest, "login.html", gin.H{
+			"error":           "Wrong credentials",
+			constants.CsrfKey: csrfToken,
+		})
 		return
 	}
 

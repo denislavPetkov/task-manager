@@ -11,11 +11,8 @@ var (
 )
 
 type Command struct {
-	Command     string
-	TaskTitle   string
-	Filter      string
-	FilterValue string
-	State       string
+	Command   string
+	TaskTitle string
 }
 
 func init() {

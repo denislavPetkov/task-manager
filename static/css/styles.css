@@ -15,6 +15,7 @@ body {
 
 input[type=text],
 input[type=password],
+input[type=currentPassword],
 input[type=email],
 textarea {
   width: 100%;
