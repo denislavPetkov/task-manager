@@ -31,11 +31,7 @@
 
 <nav class="navbar bg-dark navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
 	<div class="container-fluid">
-		<a class="navbar-brand">Tasks </a>
-		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-			aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-			<span class="navbar-toggler-icon"></span>
-		</button>
+		<a class="navbar-brand" href="/tasks">Tasks</a>
 		<div class="collapse navbar-collapse" id="navbarSupportedContent">
 			<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 				<li class="nav-item">
@@ -332,33 +328,37 @@
 
 					var tasksWithReminders = [];
 
-					function createTaskNotifications() {
-						setInterval(function () {
-							var currentDatetime = new Date();
+					function updateTaskNotifications() {
+						var currentDatetime = new Date();
 
-							var reminders = 0;
-							tasksWithReminders = [];
+						var reminders = 0;
+						tasksWithReminders = [];
 
-							tasks.forEach(function (task) {
-								if (task.completed) {
-									return
-								}
-								var deadlineDatetime = new Date(task.deadline);
-								var timeDiff = deadlineDatetime.getTime() - currentDatetime.getTime();
-								var hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60)); // Convert milliseconds to hours
+						tasks.forEach(function (task) {
+							if (task.completed) {
+								return
+							}
+							var deadlineDatetime = new Date(task.deadline);
+							var timeDiff = deadlineDatetime.getTime() - currentDatetime.getTime();
+							var hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60)); // Convert milliseconds to hours
 
-								if (hoursDiff <= 24 * 6) {
-									reminders++;
-									tasksWithReminders.push([task.title, hoursDiff]);
-								}
-							});
+							if (hoursDiff <= 24 * 6) {
+								reminders++;
+								tasksWithReminders.push([task.title, hoursDiff]);
+							}
+						});
 
-							var notificationsSpan = document.getElementById("notifications");
-							notificationsSpan.innerText = reminders;
-
-						}, 100);
+						var notificationsSpan = document.getElementById("notifications");
+						notificationsSpan.innerText = reminders;
 					}
 
+					function createTaskNotifications() {
+						setInterval(function () {
+							updateTaskNotifications();
+						}, 300000);
+					}
+
+					updateTaskNotifications();
 					createTaskNotifications();
 
 					var notificationButton = document.getElementById("notificationButton");
