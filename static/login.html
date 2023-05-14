@@ -4,33 +4,48 @@
 <head>
 	<title>Login Page</title>
 	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css">
+
 </head>
 
-<body>
-	<div class="container">
-		<h2>Login</h2>
-		<form class="center" method="POST">
+<body class="p-3 mb-2 bg-dark text-white">
+	<div class="container d-flex flex-column justify-content-center align-items-center vh-100">
+		<h2 class="text-center mb-4">Login</h2>
+		{{if .error}}
+		<div class="error mt-1">
+			{{.error}}
+		</div>
+		{{end}}
 
-			<label for="email">Email:</label>
-			<input type="email" id="email" name="email" required>
+		<form method="POST" class="text-center mt-4">
 
-			<label for="password">Password:</label>
-			<input type="password" id="password" name="password" required>
+			<div class="form-group row">
+				<label for="email" class="col-sm-3 col-form-label text-right">Email:</label>
+				<div class="col-sm-9">
+					<input type="email" id="email" name="email" class="form-control" required>
+				</div>
+			</div>
+
+			<div class="form-group row  mt-3">
+				<label for="password" class="col-sm-3 col-form-label text-right">Password:</label>
+				<div class="col-sm-9">
+					<input type="password" id="password" name="password" class="form-control" required>
+				</div>
+			</div>
 
 			<input type="hidden" name="_csrf" value="{{ .csrf }}">
-			<button type="submit">Login</button>
 
-			{{if .error}}
-			<div class="error">
-				{{.error}}
+			<div class="d-flex justify-content-center mt-4">
+				<button type="submit" class="btn btn-outline-info mx-5">Login</button>
+				<a href="/register" class="btn btn-outline-info">Register</a>
 			</div>
-			{{end}}
-		</form>
-
-		<form action="/register" method="GET">
-			<button type="submit">Register</button>
 		</form>
 	</div>
 </body>
+
+
+
+
+
 
 </html>
