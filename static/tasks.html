@@ -85,312 +85,321 @@
 		{{ .error }}
 	</div>
 	{{ end }}
-	<div id="filter-container">
-		<label for="category-filter">Category:</label>
-		<input type="text" id="category-filter" placeholder="Filter by category...">
-		<label for="tags-filter">Tags:</label>
-		<input type="text" id="tags-filter" placeholder="Filter by tags...">
-		<label for="done-filter">Done:</label>
-		<select id="done-filter">
-			<option value="all" selected>All</option>
-			<option value="done">Done</option>
-			<option value="not-done">Not Done</option>
-		</select>
-	</div>
-	<div>
-		<table class="table table-hover table-bordered">
-			<thead class="table-light">
-				<tr>
-					<th>Done</th>
-					<th>Title</th>
-					<th>Deadline</th>
-					<th>Description</th>
-					<th>Category</th>
-					<th>Tags</th>
-					<th></th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				<script>
-					var tasks = JSON.parse("{{ .Tasks }}");
-
-					for (var i = 0; i < tasks.length; i++) {
-						var task = tasks[i];
-
-						var tr = document.createElement("tr");
-						tr.innerHTML = '<td><input type="checkbox" onclick="markAsDone(this, ' + i + ')" ' +
-							(task.completed ? 'checked' : '') + '></td>' +
-							"<td>" + task.title + "</td>" +
-							"<td>" + new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ /g, '-') + "</td>" +
-							"<td>" + task.description + "</td>" +
-							"<td>" + task.category + "</td>" +
-							"<td>" + (task.tags ? task.tags.join(", ") : "") + "</td>" +
-							'<td><button onclick="editTask(\'' + task.title + '\')">Edit</button></td>' +
-							'<td><button onclick="deleteTask(\'' + task.title + '\', ' + i + ')">Delete</button></td>';
-						document.querySelector("table tbody").appendChild(tr);
-
-						if (task.completed) {
-							tr.classList.add("done");
-						}
-					}
-
-					// Add event listeners to the filter input fields
-					var categoryFilter = document.getElementById("category-filter");
-					categoryFilter.addEventListener("input", filterTasks);
-
-					var tagsFilter = document.getElementById("tags-filter");
-					tagsFilter.addEventListener("input", filterTasks);
-
-					var doneFilter = document.getElementById("done-filter");
-					doneFilter.addEventListener("input", filterTasks);
-
-					// Get the search input element by its id
-					var searchFilter = document.getElementById('search');
-					searchFilter.addEventListener("input", function () {
-						const keyword = this.value.trim();
-						var tasks = document.querySelectorAll("table tbody tr");
-						for (var i = 0; i < tasks.length; i++) {
-							var task = tasks[i];
-							if (task.querySelector("td:nth-of-type(2)").textContent.toLowerCase().includes(keyword.toLowerCase())) {
-								task.style.display = "";
-							} else {
-								task.style.display = "none";
-							}
-						}
-					});
-
-					function markAsDone(checkbox, index) {
-						var task = tasks[index];
-
-						$.ajax({
-							url: window.location.href + '/completed/' + task.title,
-							type: 'POST',
-							headers: {
-								'X-CSRF-Token': "{{ .csrf }}"
-							},
-							data: {
-								completed: !task.completed
-							},
-							success: function (result) {
-								task.completed = result.completed;
-
-								var table = document.querySelector("table tbody");
-								var rows = table.querySelectorAll("tr");
-								var rowIndex = index;
-
-								if (rows.length > rowIndex) {
-									var row = rows[rowIndex];
-									row.classList.toggle("done", task.completed);
-								}
-							}
-						});
-					}
-
-					function deleteTask(title, rowIndex) {
-						$.ajax({
-							url: window.location.href + '/delete/' + title,
-							type: 'DELETE',
-							headers: {
-								'X-CSRF-Token': "{{ .csrf }}"
-							},
-							success: function (result) {
-								document.querySelector("table tbody").deleteRow(rowIndex);
-							}
-						});
-					}
-
-					function editTask(title) {
-						var task = tasks.find(function (n) {
-							return n.title === title;
-						});
-						localStorage.setItem(title, JSON.stringify(task));
-						var url = window.location.href + '/edit/' + encodeURIComponent(title);
-						window.location.href = url;
-					}
-
-					function filterTasks() {
-						var category = categoryFilter.value.toLowerCase();
-						var tags = tagsFilter.value.toLowerCase().split(",").map(tag => tag.trim());
-						var done = doneFilter.value;
-
-						var tasks = document.querySelectorAll("table tbody tr");
-						for (var i = 0; i < tasks.length; i++) {
-							var task = tasks[i];
-							var categoryText = task.querySelector("td:nth-of-type(5)").textContent.toLowerCase();
-							var tagsText = task.querySelector("td:nth-of-type(6)").textContent.toLowerCase();
-							var doneValue = task.querySelector("td:nth-of-type(1) input").checked;
-
-							var tagsMatch = true;
-							for (var j = 0; j < tags.length; j++) {
-								if (tags[j] !== "" && !tagsText.includes(tags[j])) {
-									tagsMatch = false;
-									break;
-								}
-							}
-
-							var doneMatch = true;
-							if (done === "done") {
-								doneMatch = doneValue === true;
-							} else if (done === "not-done") {
-								doneMatch = doneValue === false;
-							}
-
-							if (categoryText.includes(category) && tagsMatch && doneMatch) {
-								task.style.display = "";
-							} else {
-								task.style.display = "none";
-							}
-						}
-					}
-
-					// function tagsMatch(text, tags) {
-					// 	for (var i = 0; i < tags.length; i++) {
-					// 		if (tags[i].trim() != "" && !text.includes(tags[i].trim())) {
-					// 			return false;
-					// 		}
-					// 	}
-					// 	return true;
-					// }
-
-					var audioContext;
-					var audioStream;
-					var recorder;
-					var isRecording = false;
-
-					const recordButton = document.getElementById("recordButton");
-					const voiceCommandElement = document.querySelector('#recordButton i');
-					const initialText = voiceCommandElement.textContent;
-
-					navigator.mediaDevices.getUserMedia({ audio: true })
-						.then(function (stream) {
-							audioStream = stream;
-							audioContext = new AudioContext();
-							var input = audioContext.createMediaStreamSource(stream);
-							recorder = new Recorder(input);
-						})
-						.catch(function (err) {
-							console.log('Error: ' + err);
-						});
-
-					function toggleRecording() {
-						if (isRecording) {
-							recorder && recorder.stop();
-							voiceCommandElement.textContent = initialText;
-							recorder && recorder.exportWAV(uploadAudio);
-						} else {
-							recorder && recorder.clear();
-							recorder && recorder.record();
-							voiceCommandElement.textContent = "Recording";
-						}
-
-						isRecording = !isRecording;
-					}
-
-					function uploadAudio(blob) {
-						var xhr = new XMLHttpRequest();
-						xhr.open('POST', '/audio', true);
-						xhr.setRequestHeader('X-CSRF-Token', '{{ .csrf }}');
-						xhr.setRequestHeader('Content-Type', 'audio/wav');
-						xhr.onload = function (e) {
-							if (this.status == 302) {
-								var response = JSON.parse(this.responseText);
-								var redirectURL = response.redirect;
-								console.log('Audio uploaded successfully, redirecting to:', redirectURL);
-								if (response.edit) {
-									tasks.forEach(function (task) {
-										if (task.Title === response.delete) {
-											editTask(response.edit)
-											return;
-										}
-									});
-
-									alert("No task with the name '" + response.delete + "' exists.");
-								} else if (response.delete) {
-									tasks.forEach(function (task, i) {
-										if (task.Title === response.delete) {
-											deleteTask(response.delete, i);
-											return;
-										}
-									});
-
-									alert("No task with the name '" + response.delete + "' exists.");
-								} else if (redirectURL) {
-									window.location.href = redirectURL; // redirect to the new page
-								}
-							}
-						};
-						xhr.send(blob);
-					}
-
-					recordButton.addEventListener("click", toggleRecording);
+	<nav class="navbar navbar-expand-lg navbar-light bg-light">
+		<div class="collapse navbar-collapse">
+			<ul class="navbar-nav">
+				<li class="nav-item">
+					<div class="row ms-1">
+						<div class="col">
+							<label for="done-filter" class="form-label">Done:</label>
+							<select id="done-filter" class="form-select">
+								<option value="all" selected>All</option>
+								<option value="done">Done</option>
+								<option value="not-done">Not Done</option>
+							</select>
+						</div>
+						<div class="col">
+							<label for="category-filter" class="form-label">Category:</label>
+							<input type="text" id="category-filter" class="form-control"
+								placeholder="Filter by category...">
+						</div>
+						<div class="col">
+							<label for="tags-filter" class="form-label">Tags:</label>
+							<input type="text" id="tags-filter" class="form-control" placeholder="Filter by tags...">
+						</div>
+					</div>
+				</li>
+			</ul>
+		</div>
+	</nav>
 
 
-					var tasksWithReminders = [];
-
-					function updateTaskNotifications() {
-						var currentDatetime = new Date();
-
-						var reminders = 0;
-						tasksWithReminders = [];
-
-						tasks.forEach(function (task) {
-							if (task.completed) {
-								return
-							}
-							var deadlineDatetime = new Date(task.deadline);
-							var timeDiff = deadlineDatetime.getTime() - currentDatetime.getTime();
-							var hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60)); // Convert milliseconds to hours
-
-							if (hoursDiff <= 24 * 6) {
-								reminders++;
-								tasksWithReminders.push([task.title, hoursDiff]);
-							}
-						});
-
-						var notificationsSpan = document.getElementById("notifications");
-						notificationsSpan.innerText = reminders;
-					}
-
-					function createTaskNotifications() {
-						setInterval(function () {
-							updateTaskNotifications();
-						}, 300000);
-					}
-
-					updateTaskNotifications();
-					createTaskNotifications();
-
-					var notificationButton = document.getElementById("notificationButton");
-					var notificationDropdown = document.getElementById("notificationDropdown");
-
-					notificationButton.addEventListener("click", function () {
-						// Clear existing notifications
-						while (notificationDropdown.firstChild) {
-							notificationDropdown.firstChild.remove();
-						}
-
-						// Generate and append new notification items
-						tasksWithReminders.forEach(function (taskInfo) {
-							var notificationItem = document.createElement("li");
-							notificationItem.className = "dropdown-item";
-							var hours = taskInfo[1] % 24;
-							var days = Math.floor(taskInfo[1] / 24)
-
-							if (hours < 0 || days < 0) {
-								notificationItem.textContent = "Task '" + taskInfo[0] + "' is overdue by " + Math.abs(days) + " day(s) and " + Math.abs(hours) + " hours";
-							} else {
-								notificationItem.textContent = "Task '" + taskInfo[0] + "' is due in " + Math.floor(taskInfo[1] / 24) + " day(s) and " + (taskInfo[1] % 24) + " hours";
-							}
-
-							notificationDropdown.appendChild(notificationItem);
-						});
-					});
-
-				</script>
-			</tbody>
-		</table>
-	</div>
+	<table class="table table-hover table-bordered">
+		<thead class="table-dark">
+			<tr>
+				<th class="text-center">Done</th>
+				<th class="text-center">Title</th>
+				<th class="text-center">Deadline</th>
+				<th class="text-center">Description</th>
+				<th class="text-center">Category</th>
+				<th class="text-center">Tags</th>
+				<th class="text-center"></th>
+				<th class="text-center"></th>
+			</tr>
+		</thead>
+		<tbody class="table-group-divider">
+			<!-- populated from the javescript -->
+		</tbody>
+	</table>
 </body>
 
 </html>
+
+<script>
+	var tasks = JSON.parse("{{ .Tasks }}");
+
+	for (var i = 0; i < tasks.length; i++) {
+		var task = tasks[i];
+
+		var tr = document.createElement("tr");
+		tr.innerHTML = '<td class="text-center"><input type="checkbox" onclick="markAsDone(this, ' + i + ')" ' +
+			(task.completed ? 'checked' : '') + '></td>' +
+			"<td class='text-center'>" + task.title + "</td>" +
+			"<td class='text-center'>" + new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ /g, '-') + "</td>" +
+			"<td class='text-center'>" + task.description + "</td>" +
+			"<td class='text-center'>" + task.category + "</td>" +
+			"<td class='text-center'>" + (task.tags ? task.tags.join(", ") : "") + "</td>" +
+			'<td class="text-center"><button onclick="editTask(\'' + task.title + '\')">Edit</button></td>' +
+			'<td class="text-center"><button onclick="deleteTask(\'' + task.title + '\', ' + i + ')">Delete</button></td>';
+		document.querySelector("table tbody").appendChild(tr);
+
+		if (task.completed) {
+			tr.classList.add("done");
+		}
+	}
+
+	// Add event listeners to the filter input fields
+	var categoryFilter = document.getElementById("category-filter");
+	categoryFilter.addEventListener("input", filterTasks);
+
+	var tagsFilter = document.getElementById("tags-filter");
+	tagsFilter.addEventListener("input", filterTasks);
+
+	var doneFilter = document.getElementById("done-filter");
+	doneFilter.addEventListener("input", filterTasks);
+
+	// Get the search input element by its id
+	var searchFilter = document.getElementById('search');
+	searchFilter.addEventListener("input", function () {
+		const keyword = this.value.trim();
+		var tasks = document.querySelectorAll("table tbody tr");
+		for (var i = 0; i < tasks.length; i++) {
+			var task = tasks[i];
+			if (task.querySelector("td:nth-of-type(2)").textContent.toLowerCase().includes(keyword.toLowerCase())) {
+				task.style.display = "";
+			} else {
+				task.style.display = "none";
+			}
+		}
+	});
+
+	function markAsDone(checkbox, index) {
+		var task = tasks[index];
+
+		$.ajax({
+			url: window.location.href + '/completed/' + task.title,
+			type: 'POST',
+			headers: {
+				'X-CSRF-Token': "{{ .csrf }}"
+			},
+			data: {
+				completed: !task.completed
+			},
+			success: function (result) {
+				task.completed = result.completed;
+
+				var table = document.querySelector("table tbody");
+				var rows = table.querySelectorAll("tr");
+				var rowIndex = index;
+
+				if (rows.length > rowIndex) {
+					var row = rows[rowIndex];
+					row.classList.toggle("done", task.completed);
+					updateTaskNotifications();
+				}
+			}
+		});
+	}
+
+	function deleteTask(title, rowIndex) {
+		$.ajax({
+			url: window.location.href + '/delete/' + title,
+			type: 'DELETE',
+			headers: {
+				'X-CSRF-Token': "{{ .csrf }}"
+			},
+			success: function (result) {
+				document.querySelector("table tbody").deleteRow(rowIndex);
+			}
+		});
+	}
+
+	function editTask(title) {
+		var task = tasks.find(function (n) {
+			return n.title === title;
+		});
+		localStorage.setItem(title, JSON.stringify(task));
+		var url = window.location.href + '/edit/' + encodeURIComponent(title);
+		window.location.href = url;
+	}
+
+	function filterTasks() {
+		var category = categoryFilter.value.toLowerCase();
+		var tags = tagsFilter.value.toLowerCase().split(",").map(tag => tag.trim());
+		var done = doneFilter.value;
+
+		var tasks = document.querySelectorAll("table tbody tr");
+		for (var i = 0; i < tasks.length; i++) {
+			var task = tasks[i];
+			var categoryText = task.querySelector("td:nth-of-type(5)").textContent.toLowerCase();
+			var tagsText = task.querySelector("td:nth-of-type(6)").textContent.toLowerCase();
+			var doneValue = task.querySelector("td:nth-of-type(1) input").checked;
+
+			var tagsMatch = true;
+			for (var j = 0; j < tags.length; j++) {
+				if (tags[j] !== "" && !tagsText.includes(tags[j])) {
+					tagsMatch = false;
+					break;
+				}
+			}
+
+			var doneMatch = true;
+			if (done === "done") {
+				doneMatch = doneValue === true;
+			} else if (done === "not-done") {
+				doneMatch = doneValue === false;
+			}
+
+			if (categoryText.includes(category) && tagsMatch && doneMatch) {
+				task.style.display = "";
+			} else {
+				task.style.display = "none";
+			}
+		}
+	}
+
+	var audioContext;
+	var audioStream;
+	var recorder;
+	var isRecording = false;
+
+	const recordButton = document.getElementById("recordButton");
+	const voiceCommandElement = document.querySelector('#recordButton i');
+	const initialText = voiceCommandElement.textContent;
+
+	navigator.mediaDevices.getUserMedia({ audio: true })
+		.then(function (stream) {
+			audioStream = stream;
+			audioContext = new AudioContext();
+			var input = audioContext.createMediaStreamSource(stream);
+			recorder = new Recorder(input);
+		})
+		.catch(function (err) {
+			console.log('Error: ' + err);
+		});
+
+	function toggleRecording() {
+		if (isRecording) {
+			recorder && recorder.stop();
+			voiceCommandElement.textContent = initialText;
+			recorder && recorder.exportWAV(uploadAudio);
+		} else {
+			recorder && recorder.clear();
+			recorder && recorder.record();
+			voiceCommandElement.textContent = "Recording";
+		}
+
+		isRecording = !isRecording;
+	}
+
+	function uploadAudio(blob) {
+		var xhr = new XMLHttpRequest();
+		xhr.open('POST', '/audio', true);
+		xhr.setRequestHeader('X-CSRF-Token', '{{ .csrf }}');
+		xhr.setRequestHeader('Content-Type', 'audio/wav');
+		xhr.onload = function (e) {
+			if (this.status == 302) {
+				var response = JSON.parse(this.responseText);
+				var redirectURL = response.redirect;
+				console.log('Audio uploaded successfully, redirecting to:', redirectURL);
+				if (response.edit) {
+					tasks.forEach(function (task) {
+						if (task.Title === response.delete) {
+							editTask(response.edit)
+							return;
+						}
+					});
+
+					alert("No task with the name '" + response.delete + "' exists.");
+				} else if (response.delete) {
+					tasks.forEach(function (task, i) {
+						if (task.Title === response.delete) {
+							deleteTask(response.delete, i);
+							return;
+						}
+					});
+
+					alert("No task with the name '" + response.delete + "' exists.");
+				} else if (redirectURL) {
+					window.location.href = redirectURL; // redirect to the new page
+				}
+			}
+		};
+		xhr.send(blob);
+	}
+
+	recordButton.addEventListener("click", toggleRecording);
+
+
+	var tasksWithReminders = [];
+
+	function updateTaskNotifications() {
+		var currentDatetime = new Date();
+
+		var reminders = 0;
+		tasksWithReminders = [];
+
+		tasks.forEach(function (task) {
+			if (task.completed) {
+				return
+			}
+			var deadlineDatetime = new Date(task.deadline);
+			var timeDiff = deadlineDatetime.getTime() - currentDatetime.getTime();
+			var hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60)); // Convert milliseconds to hours
+
+			if (hoursDiff <= 24 * 6) {
+				reminders++;
+				tasksWithReminders.push([task.title, hoursDiff]);
+			}
+		});
+
+		var notificationsSpan = document.getElementById("notifications");
+		notificationsSpan.innerText = reminders;
+	}
+
+	function createTaskNotifications() {
+		setInterval(function () {
+			updateTaskNotifications();
+		}, 300000);
+	}
+
+	updateTaskNotifications();
+	createTaskNotifications();
+
+	var notificationButton = document.getElementById("notificationButton");
+	var notificationDropdown = document.getElementById("notificationDropdown");
+
+	notificationButton.addEventListener("click", function () {
+		// Clear existing notifications
+		while (notificationDropdown.firstChild) {
+			notificationDropdown.firstChild.remove();
+		}
+
+		// Generate and append new notification items
+		tasksWithReminders.forEach(function (taskInfo) {
+			var notificationItem = document.createElement("li");
+			notificationItem.className = "dropdown-item";
+			var hours = taskInfo[1] % 24;
+			var days = Math.floor(taskInfo[1] / 24)
+
+			if (hours < 0 || days < 0) {
+				notificationItem.textContent = "Task '" + taskInfo[0] + "' is overdue by " + Math.abs(days) + " day(s) and " + Math.abs(hours) + " hours";
+			} else {
+				notificationItem.textContent = "Task '" + taskInfo[0] + "' is due in " + Math.floor(taskInfo[1] / 24) + " day(s) and " + (taskInfo[1] % 24) + " hours";
+			}
+
+			notificationDropdown.appendChild(notificationItem);
+		});
+	});
+
+</script>
