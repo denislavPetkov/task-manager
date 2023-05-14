@@ -1,72 +1,89 @@
 <!DOCTYPE html>
 <html>
 <style>
-	main {
-		display: flex;
-		justify-content: right;
-		height: 100%;
+	.notification-badge {
 		position: relative;
+		top: 10px;
+		right: -50px;
+		padding: 4px 8px;
+		border-radius: 50%;
+		background-color: red;
+		color: white;
+		font-size: 12px;
 	}
 
-	main .notification {
-		position: relative;
-		width: 10%;
-		height: 10%;
-	}
-
-	main .notification svg {
-		width: 10%;
-		height: 10%;
-	}
-
-	.notification-container {
-		position: fixed;
-		top: 20px;
-		right: 20px;
-		z-index: 9999;
-	}
-
-	.notification-window {
-		background-color: #fff;
-		border: 1px solid #ccc;
-		padding: 10px;
-		box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-		margin-bottom: 10px;
+	.dropdown-menu.notification-dropdown {
+		max-height: calc(100vh - 200px);
+		overflow-y: auto;
+		transform: translateX(-80%);
 	}
 </style>
+<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/mattdiamond/Recorderjs/dist/recorder.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
 <head>
 	<title>Tasks</title>
-	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/gh/mattdiamond/Recorderjs/dist/recorder.js"></script>
-	<button id="recordButton">Voice command</button>
 </head>
 
-<body>
-	<h1>Tasks</h1>
-	<main rel="main">
-		<div class="notification-container" id="notificationContainer">
-			<!-- Notification windows will be appended here -->
+
+<nav class="navbar bg-dark navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
+	<div class="container-fluid">
+		<a class="navbar-brand">Tasks </a>
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+			aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="navbarSupportedContent">
+			<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+				<li class="nav-item">
+					<a class="nav-link active" aria-current="page" href="/tasks/new">Add new task</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/passChange">Change account password</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/logout">Logout</a>
+				</li>
+			</ul>
+			<a class="navbar-brand">
+				<button id="recordButton" class="btn btn-primary">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+						class="bi bi-mic-fill" viewBox="0 0 16 16">
+						<path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z" />
+						<path
+							d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z" />
+					</svg>
+					<i class="bi bi-mic-fill">Voice command</i>
+				</button>
+			</a>
+			<form class="d-flex" role="search">
+				<input class="form-control me-2" id="search" type="text" placeholder="Search" aria-label="Search">
+			</form>
+			<div class="dropdown">
+				<span class="notification-badge" id="notifications">0</span>
+				<button class="btn btn-dark dropdown-toggle" type="button" id="notificationButton"
+					data-bs-toggle="dropdown" aria-expanded="false">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+						class="bi bi-bell" viewBox="0 0 16 16">
+						<path
+							d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5.002 5.002 0 0 1 13 6c0 .88.32 4.2 1.22 6z" />
+					</svg>
+				</button>
+				<ul class="dropdown-menu notification-dropdown" aria-labelledby="notificationButton"
+					id="notificationDropdown">
+					<!-- Notification items will be dynamically added here -->
+				</ul>
+			</div>
 		</div>
-		<div class="notification" id="notification">
-			<svg viewbox="0 0 166 197">
-				<path
-					d="M82.8652955,196.898522 C97.8853137,196.898522 110.154225,184.733014 110.154225,169.792619 L55.4909279,169.792619 C55.4909279,184.733014 67.8452774,196.898522 82.8652955,196.898522 L82.8652955,196.898522 Z">
-				</path>
-				</path>
-				<path
-					d="M146.189736,135.093562 L146.189736,82.040478 C146.189736,52.1121695 125.723173,27.9861651 97.4598237,21.2550099 L97.4598237,14.4635396 C97.4598237,6.74321823 90.6498186,0 82.8530327,0 C75.0440643,0 68.2462416,6.74321823 68.2462416,14.4635396 L68.2462416,21.2550099 C39.9707102,27.9861651 19.5163297,52.1121695 19.5163297,82.040478 L19.5163297,135.093562 L0,154.418491 L0,164.080956 L165.706065,164.080956 L165.706065,154.418491 L146.189736,135.093562 Z">
-				</path>
-			</svg>
-			<span id="notifications"></span>
-		</div>
-	</main>
-	<div>
-		<button onclick="logout()">Logout</button>
-		<button onclick="addNewTask()">Add New Task</button>
-		<button onclick="changePassword()">Change Password</button>
 	</div>
+</nav>
+
+
+
+<body>
 	{{ if .error }}
 	<div class="error">
 		{{ .error }}
@@ -84,9 +101,9 @@
 			<option value="not-done">Not Done</option>
 		</select>
 	</div>
-	<div id="task-container">
-		<table>
-			<thead>
+	<div>
+		<table class="table table-hover table-bordered">
+			<thead class="table-light">
 				<tr>
 					<th>Done</th>
 					<th>Title</th>
@@ -94,6 +111,7 @@
 					<th>Description</th>
 					<th>Category</th>
 					<th>Tags</th>
+					<th></th>
 					<th></th>
 				</tr>
 			</thead>
@@ -131,17 +149,20 @@
 					var doneFilter = document.getElementById("done-filter");
 					doneFilter.addEventListener("input", filterTasks);
 
-					function logout() {
-						window.location.href = "/logout";
-					}
-
-					function changePassword() {
-						window.location.href = "/passChange";
-					}
-
-					function addNewTask() {
-						window.location.href = window.location.href + "/new";
-					}
+					// Get the search input element by its id
+					var searchFilter = document.getElementById('search');
+					searchFilter.addEventListener("input", function () {
+						const keyword = this.value.trim();
+						var tasks = document.querySelectorAll("table tbody tr");
+						for (var i = 0; i < tasks.length; i++) {
+							var task = tasks[i];
+							if (task.querySelector("td:nth-of-type(2)").textContent.toLowerCase().includes(keyword.toLowerCase())) {
+								task.style.display = "";
+							} else {
+								task.style.display = "none";
+							}
+						}
+					});
 
 					function markAsDone(checkbox, index) {
 						var task = tasks[index];
@@ -227,20 +248,23 @@
 						}
 					}
 
-					function tagsMatch(text, tags) {
-						for (var i = 0; i < tags.length; i++) {
-							if (tags[i].trim() != "" && !text.includes(tags[i].trim())) {
-								return false;
-							}
-						}
-						return true;
-					}
+					// function tagsMatch(text, tags) {
+					// 	for (var i = 0; i < tags.length; i++) {
+					// 		if (tags[i].trim() != "" && !text.includes(tags[i].trim())) {
+					// 			return false;
+					// 		}
+					// 	}
+					// 	return true;
+					// }
 
 					var audioContext;
 					var audioStream;
 					var recorder;
 					var isRecording = false;
-					var recordButton = document.getElementById("recordButton");
+
+					const recordButton = document.getElementById("recordButton");
+					const voiceCommandElement = document.querySelector('#recordButton i');
+					const initialText = voiceCommandElement.textContent;
 
 					navigator.mediaDevices.getUserMedia({ audio: true })
 						.then(function (stream) {
@@ -256,13 +280,14 @@
 					function toggleRecording() {
 						if (isRecording) {
 							recorder && recorder.stop();
-							recordButton.innerText = "Record";
+							voiceCommandElement.textContent = initialText;
 							recorder && recorder.exportWAV(uploadAudio);
 						} else {
 							recorder && recorder.clear();
 							recorder && recorder.record();
-							recordButton.innerText = "Stop";
+							voiceCommandElement.textContent = "Recording";
 						}
+
 						isRecording = !isRecording;
 					}
 
@@ -336,42 +361,31 @@
 
 					createTaskNotifications();
 
-					var notificationContainer = document.getElementById("notificationContainer");
-					var notifications = [];
+					var notificationButton = document.getElementById("notificationButton");
+					var notificationDropdown = document.getElementById("notificationDropdown");
 
-					notification.addEventListener("click", function () {
-
-						while (notificationContainer.firstChild) {
-							notificationContainer.removeChild(notificationContainer.firstChild);
+					notificationButton.addEventListener("click", function () {
+						// Clear existing notifications
+						while (notificationDropdown.firstChild) {
+							notificationDropdown.firstChild.remove();
 						}
 
+						// Generate and append new notification items
 						tasksWithReminders.forEach(function (taskInfo) {
-							var notificationWindow = document.createElement("div");
-							notificationWindow.className = "notification-window";
-
+							var notificationItem = document.createElement("li");
+							notificationItem.className = "dropdown-item";
 							var hours = taskInfo[1] % 24;
 							var days = Math.floor(taskInfo[1] / 24)
 
 							if (hours < 0 || days < 0) {
-								notificationWindow.textContent = "Task '" + taskInfo[0] + "' is overdue by " + Math.abs(days) + " day(s) and " + Math.abs(hours) + " hours";
+								notificationItem.textContent = "Task '" + taskInfo[0] + "' is overdue by " + Math.abs(days) + " day(s) and " + Math.abs(hours) + " hours";
 							} else {
-								notificationWindow.textContent = "Task '" + taskInfo[0] + "' is due in " + Math.floor(taskInfo[1] / 24) + " day(s) and " + (taskInfo[1] % 24) + " hours";
+								notificationItem.textContent = "Task '" + taskInfo[0] + "' is due in " + Math.floor(taskInfo[1] / 24) + " day(s) and " + (taskInfo[1] % 24) + " hours";
 							}
 
-							notificationContainer.appendChild(notificationWindow);
-							notifications.push(notificationWindow);
-
-							setTimeout(function () {
-								var index = notifications.indexOf(notificationWindow);
-								if (index > -1) {
-									notifications.splice(index, 1);
-								}
-
-								notificationContainer.removeChild(notificationWindow);
-							}, 3000);
+							notificationDropdown.appendChild(notificationItem);
 						});
 					});
-
 
 				</script>
 			</tbody>
