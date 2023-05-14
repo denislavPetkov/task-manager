@@ -77,7 +77,7 @@
 	</div>
 </nav>
 
-<body>
+<body class="bg-dark">
 	{{ if .error }}
 	<div class="error">
 		{{ .error }}
@@ -111,8 +111,8 @@
 		</div>
 	</nav>
 
-	<table class="table table-hover table-bordered bg-dark">
-		<thead class="table-dark">
+	<table class="table table-hover table-sm bg-transparent">
+		<thead class="table-dark border-4 border-secondary">
 			<tr>
 				<th class="text-center">Done</th>
 				<th class="text-center">Title</th>
@@ -154,6 +154,8 @@
 
 		if (task.completed) {
 			tr.classList.add("text-decoration-line-through");
+			var editButton = tr.querySelector(".btn-outline-warning");
+			editButton.disabled = true;
 		}
 	}
 
@@ -204,6 +206,8 @@
 				if (rows.length > rowIndex) {
 					var row = rows[rowIndex];
 					row.classList.toggle("text-decoration-line-through", task.completed);
+					var editButton = row.querySelector(".btn-outline-warning");
+					editButton.disabled = !editButton.disabled;
 					updateTaskNotifications();
 				}
 			}
