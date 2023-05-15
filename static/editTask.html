@@ -1,121 +1,165 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-	<title>Edit Task</title>
-	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <title>Edit Task {{ .task.Title }}</title>
+  <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css">
 </head>
-<body>
-	<h1>Edit Task</h1>
-  {{ if .error }}
-  <div class="error">
+
+<body class="p-3 mb-2 bg-dark text-white">
+  <div class="container d-flex flex-column align-items-center vh-100">
+    <h1 id="taskHeading">Edit Task {{ .task.Title }}</h1>
+    {{ if .error }}
+    <div class="error mt-1">
       {{ .error }}
-  </div>
-  {{ end }}
-  {{ if .success }}
-  <div class="success">
+    </div>
+    {{ end }}
+    {{ if .success }}
+    <div class="success mt-1">
       {{ .success }}
-  </div>
-  <meta http-equiv="refresh" content="0.2; URL=/tasks">
-  {{ end }}   
-  <p>* denotes required field</p>
-	<form method="post" action="">
-		<label for="title">Title:</label>
-		<input type="text" id="title" name="title" value="{{ .task.Title }}" disabled>
-    <label for="deadline">Deadline:*</label><br>
-    <input type="date" id="deadline" name="deadline" value="{{ .task.Deadline }}" required><br>
-		<label for="description">Description*:</label>
-		<textarea id="description" name="description" required style="font-size: 16px;">{{ .task.Description }}</textarea>
-		<label for="category">Category:</label>
-		<input type="text" id="category" name="category" value="{{ .task.Category }}">
-		<label for="tags">Tags:</label>
-        <div id="tags-container">
-          {{ range $index, $tag := .task.Tags }}
-          <input type="text" class="tag-input" name="tags[]" value="{{ $tag }}" autocomplete="off">
-        {{ end }}
+    </div>
+    <meta http-equiv="refresh" content="0.2; URL=/tasks">
+    {{ end }}
+    <p>* denotes required field</p>
+    <form method="post" action="">
+
+      <div class="form-group row">
+        <label for="title" class="col-sm-3 text-right">Title:</label>
+        <div class="col-sm-9">
+          <input type="text" id="title" name="title" value="{{ .task.Title }}" disabled>
         </div>
-        <button type="button" id="add-tag-button">Add Tag</button>
-    <input type="hidden" id="completed" name="completed">
-    <input type="hidden" name="_csrf" value="{{ .csrf }}">
-		<button type="submit">Save</button>
-	</form>
-	<button onclick="cancel()">Cancel</button>
-    <script>
-        var title = window.location.pathname.split('/').pop();
-        var task = JSON.parse(localStorage.getItem(title));
-        console.log('Task retrieved from localStorage:', title);
+      </div>
 
-        console.log('Task retrieved from localStorage:', task);
+      <div class=" form-group row mt-3">
+        <label for="deadline" class="col-sm-3 text-right">Deadline:*</label>
+        <div class="col-sm-9">
+          <input type="date" id="deadline" name="deadline" value="{{ .task.Deadline }}" required>
+        </div>
+      </div>
 
-        if (task && !"{{ .success }}") {
-          document.querySelector('#title').value = task.title;
-          document.querySelector('#deadline').value = task.deadline;
-          document.querySelector('#description').value = task.description;
-          document.querySelector('#category').value = task.category;
-          document.querySelector('#completed').value = task.completed;
+      <div class=" form-group row mt-3">
+        <label for="description" class="col-sm-3  text-right">Task Description*:</label>
+        <div class="col-sm-9">
+          <textarea id="description" name="description" required
+            style="font-size: 16px; height: 100px; width: 300px;">{{ .task.Description }}</textarea>
+        </div>
+      </div>
 
-            var tagsInput = document.querySelector('#tags-container');
-            for (var i = 0; i < task.tags.length; i++) {
-              var container = document.createElement('div');
 
-              var tagInput = document.createElement('input');
-              tagInput.type = 'text';
-              tagInput.name = 'tags[]';
-              tagInput.value = task.tags[i];
+      <div class=" form-group row mt-3">
+        <label for="category" class="col-sm-3 text-right">Category:</label>
+        <div class="col-sm-9">
+          <input type="text" id="category" name="category" value="{{ .task.Category }}">
+        </div>
+      </div>
 
-              var removeButton = document.createElement('button');
-              removeButton.classList.add('remove-tag-button');
-              removeButton.textContent = 'x';
-              removeButton.addEventListener('click', function() {
-                this.parentElement.remove();
-              });
+      <div class="form-group row mt-3">
+        <label for="tags" class="col-sm-3 text-right">Tags:</label>
+        <div class="col-sm-9">
+          <div id="tags-container">
+            {{ range $index, $tag := .task.Tags }}
+            <div class="tag-input-container">
+              <input type="text" class="tag-input" name="tags[]" value="{{ $tag }}" autocomplete="off">
+            </div>
+            {{ end }}
+          </div>
+        </div>
+      </div>
 
-              tagInput.classList.add('tag-input');
-              tagInput.autocomplete = 'off';
-              container.classList.add('tag-input-container');
+      <button type="button" id="add-tag-button" class="btn btn-outline-primary mt-3">Add Tag</button>
+      <input type="hidden" id="completed" name="completed">
+      <input type="hidden" name="_csrf" value="{{ .csrf }}">
+      <div class="ms-5 mt-5">
+        <button type="submit" class="btn btn-outline-success d-inline ms-5">Save</button>
+        <button type="button" onclick="cancel()" class="btn btn-outline-light d-inline ms-5">Cancel</button>
+      </div>
 
-              
-              tagsInput.appendChild(container);
-              
-              container.appendChild(tagInput);
-              container.appendChild(removeButton);
-            }
-          
-        } else {
-          // Handle error if task not found
+    </form>
+  </div>
+  <script>
+    var title = window.location.pathname.split('/').pop();
+    var task = JSON.parse(localStorage.getItem(title));
+
+    var pageTitle = "Edit Task " + title;
+
+    document.title = pageTitle
+
+    var headingElement = document.getElementById("taskHeading");
+    headingElement.textContent = pageTitle;
+
+    if (task && !"{{ .success }}") {
+      document.querySelector('#title').value = task.title;
+      document.querySelector('#deadline').value = task.deadline;
+      document.querySelector('#description').value = task.description;
+      document.querySelector('#category').value = task.category;
+      document.querySelector('#completed').value = task.completed;
+
+      var tagsInput = document.querySelector('#tags-container');
+
+      if (task.tags != null) {
+        for (var i = 0; i < task.tags.length; i++) {
+          var container = document.createElement('div');
+
+          var tagInput = document.createElement('input');
+          tagInput.type = 'text';
+          tagInput.name = 'tags[]';
+          tagInput.value = task.tags[i];
+
+          var removeButton = document.createElement('button');
+          removeButton.classList.add('remove-tag-button', 'btn', 'btn-outline-danger');
+          removeButton.textContent = 'x';
+          removeButton.addEventListener('click', function () {
+            this.parentElement.remove();
+          });
+
+          tagInput.classList.add('tag-input');
+          tagInput.autocomplete = 'off';
+          container.classList.add('tag-input-container');
+
+
+          tagsInput.appendChild(container);
+
+          container.appendChild(tagInput);
+          container.appendChild(removeButton);
         }
-      
-        var addTagButton = document.getElementById('add-tag-button');
-        var tagsContainer = document.getElementById('tags-container');
+      }
 
-        addTagButton.addEventListener('click', function() {
-            var container = document.createElement('div');
-            container.classList.add('tag-input-container');
+    }
 
-            var tagInput = document.createElement('input');
-            tagInput.type = 'text';
-            tagInput.className = 'tag-input';
-            tagInput.name = 'tags[]';
-            tagInput.autocomplete = 'off';
+    var addTagButton = document.getElementById('add-tag-button');
+    var tagsContainer = document.getElementById('tags-container');
 
-            var removeButton = document.createElement('button');
-              removeButton.classList.add('remove-tag-button');
-              removeButton.textContent = 'x';
-              removeButton.addEventListener('click', function() {
-                this.parentElement.remove();
-              });
+    addTagButton.addEventListener('click', function () {
+      var container = document.createElement('div');
+      container.classList.add('tag-input-container');
 
-            tagsContainer.appendChild(container);
+      var tagInput = document.createElement('input');
+      tagInput.type = 'text';
+      tagInput.className = 'tag-input';
+      tagInput.name = 'tags[]';
+      tagInput.autocomplete = 'off';
 
-            container.appendChild(tagInput);
-            container.appendChild(removeButton);
-            container.appendChild(document.createElement('br'));
-        });
+      var removeButton = document.createElement('button');
+      removeButton.classList.add('remove-tag-button', 'btn', 'btn-outline-danger');
+      removeButton.textContent = 'x';
+      removeButton.addEventListener('click', function () {
+        this.parentElement.remove();
+      });
 
-        function cancel() {
-        window.location.href = window.location.origin;
-        }
+      tagsContainer.appendChild(container);
 
-      </script>
+      container.appendChild(tagInput);
+      container.appendChild(removeButton);
+      container.appendChild(document.createElement('br'));
+    });
+
+    function cancel() {
+      window.location.href = window.location.origin;
+    }
+
+  </script>
 </body>
+
 </html>
