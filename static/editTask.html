@@ -31,6 +31,7 @@
     <meta http-equiv="refresh" content="0.2; URL=/tasks">
     {{ end }}
     <p>* denotes required field</p>
+
     <form method="post" action="">
 
       <div class="form-group row">
@@ -120,7 +121,7 @@
         tagInput.value = task.tags[i];
 
         var removeButton = document.createElement('button');
-        removeButton.classList.add('remove-tag-button', 'btn', 'btn-outline-danger');
+        removeButton.classList.add('remove-tag-button', 'btn', 'btn-outline-danger', 'ms-1');
         removeButton.textContent = 'x';
         removeButton.addEventListener('click', function () {
           this.parentElement.remove();
@@ -154,7 +155,7 @@
     tagInput.autocomplete = 'off';
 
     var removeButton = document.createElement('button');
-    removeButton.classList.add('remove-tag-button', 'btn', 'btn-outline-danger');
+    removeButton.classList.add('remove-tag-button', 'btn', 'btn-outline-danger', 'ms-1');
     removeButton.textContent = 'x';
     removeButton.addEventListener('click', function () {
       this.parentElement.remove();
@@ -164,7 +165,6 @@
 
     container.appendChild(tagInput);
     container.appendChild(removeButton);
-    container.appendChild(document.createElement('br'));
   });
 
   function cancel() {
