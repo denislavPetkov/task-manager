@@ -315,24 +315,33 @@
 				var response = JSON.parse(this.responseText);
 				var redirectURL = response.redirect;
 				console.log('Audio uploaded successfully, redirecting to:', redirectURL);
+
+				var taskFound = false;
+
 				if (response.edit) {
 					tasks.forEach(function (task) {
-						if (task.Title === response.delete) {
-							editTask(response.edit)
+						if (task.title === response.edit) {
+							taskFound = true;
+							editTask(response.edit);
 							return;
 						}
 					});
 
-					alert("No task with the name '" + response.delete + "' exists.");
+					if (!taskFound) {
+						alert("No task with the name '" + response.edit + "' exists.");
+					}
 				} else if (response.delete) {
 					tasks.forEach(function (task, i) {
-						if (task.Title === response.delete) {
+						if (task.title === response.delete) {
+							taskFound = true;
 							deleteTask(response.delete, i);
 							return;
 						}
 					});
 
-					alert("No task with the name '" + response.delete + "' exists.");
+					if (!taskFound) {
+						alert("No task with the name '" + response.delete + "' exists.");
+					}
 				} else if (redirectURL) {
 					window.location.href = redirectURL; // redirect to the new page
 				}

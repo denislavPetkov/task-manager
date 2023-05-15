@@ -42,7 +42,10 @@ func (c *controller) postAudio(gc *gin.Context) {
 	}
 
 	voiceCommand := strings.ToLower(resp.Text)
-	command := nlp.GetCommand(voiceCommand)
+	command := nlp.GetCommand(trimTaskTitle(voiceCommand))
+
+	fmt.Println(voiceCommand)
+	fmt.Println(command)
 
 	switch {
 	case slices.Contains(nlp.CreateCommands, command.Command):
