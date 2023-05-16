@@ -94,7 +94,7 @@
       <input type="hidden" name="_csrf" value="{{ .csrf }}">
       <div class="ms-5 mt-5">
         <button type="submit" class="btn btn-outline-success d-inline ms-5">Save</button>
-        <button type="button" onclick="cancel()" class="btn btn-outline-light d-inline ms-5">Cancel</button>
+        <a href="/tasks" class="btn btn-outline-light d-inline ms-5">Cancel</a>
       </div>
 
     </form>
@@ -178,9 +178,5 @@
     container.appendChild(tagInput);
     container.appendChild(removeButton);
   });
-
-  function cancel() {
-    window.location.href = window.location.origin;
-  }
 
 </script>

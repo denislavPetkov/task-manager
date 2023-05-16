@@ -28,6 +28,7 @@ func (c *controller) getLogin(gc *gin.Context) {
 	sessionID := session.Get(constants.SessionIdKey)
 	if sessionID != nil {
 		gc.Redirect(http.StatusFound, "/tasks")
+		gc.Next()
 	}
 
 	csrfToken := csrf.GetToken(gc)

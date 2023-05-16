@@ -82,8 +82,8 @@
             <button type="button" id="add-tag-button" class="btn btn-outline-primary mt-3">Add Tag</button>
             <div class="ms-2 mt-5">
                 <button type="submit" class="btn btn-outline-success d-inline ms-2">Save Task</button>
-                <button type="button" onclick="goBack()" class="btn btn-outline-light d-inline ms-5">Go back to
-                    tasks</button>
+                <a href="/tasks" class="btn btn-outline-light d-inline ms-5">Go back to
+                    tasks</a>
             </div>
 
         </form>
@@ -119,8 +119,4 @@
         container.appendChild(tagInput);
         container.appendChild(removeButton);
     });
-
-    function goBack() {
-        window.location.href = "/tasks";
-    }
 </script>
