@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
@@ -15,8 +16,16 @@ func (c *controller) getLogout(gc *gin.Context) {
 		Secure:   true,
 		HttpOnly: true,
 	})
+
 	session.Clear()
-	session.Save()
+
+	err := session.Save()
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to save current session, error: %v", err))
+		return
+	}
+
+	logger.Info("Logout successful")
 
 	gc.Redirect(http.StatusFound, "/login")
 }

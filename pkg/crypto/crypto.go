@@ -2,18 +2,30 @@ package crypto
 
 import (
 	"encoding/base64"
-	"log"
+	"fmt"
 
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func GenerateToken(input string) string {
+var (
+	logger *zap.Logger
+)
+
+func init() {
+	logger = zap.L().Named("crypto")
+}
+
+func GenerateToken(input string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(input), bcrypt.DefaultCost)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(fmt.Sprintf("Failed to generate a random token, error: %v", err))
+		return "", err
 	}
 
-	return base64.StdEncoding.EncodeToString(hash)
+	logger.Info("Generated a random token successfully")
+
+	return base64.StdEncoding.EncodeToString(hash), nil
 }
 
 func GetHashedPassword(password string) (string, error) {
@@ -21,8 +33,11 @@ func GetHashedPassword(password string) (string, error) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword(passwordBytes, bcrypt.DefaultCost)
 	if err != nil {
-		return "", nil
+		logger.Error(fmt.Sprintf("Failed to generate a hashed password, error: %v", err))
+		return "", err
 	}
+
+	logger.Info("Generated a hashed password successfully")
 
 	return string(hashedPassword), nil
 }

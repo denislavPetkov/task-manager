@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -36,16 +35,16 @@ func (c *controller) postAudio(gc *gin.Context) {
 		AudioFormat: whisperAudioFormat,
 	})
 	if err != nil {
-		log.Fatalf("error transcribing: %v", err)
-		gc.HTML(http.StatusInternalServerError, "login.html", gin.H{"error": "Server error"})
+		logger.Error(fmt.Sprintf("Failed to transcribe, error: %v", err))
+		gc.HTML(http.StatusInternalServerError, loginHtml, gin.H{errorKey: serverErrorErrMsg})
 		return
 	}
 
 	voiceCommand := strings.ToLower(resp.Text)
 	command := nlp.GetCommand(trimTaskTitle(voiceCommand))
 
-	fmt.Println(voiceCommand)
-	fmt.Println(command)
+	logger.Info(fmt.Sprintf("Raw voice command: %s", voiceCommand))
+	logger.Info(fmt.Sprintf("Processed voice command: %v", command))
 
 	switch {
 	case slices.Contains(nlp.CreateCommands, command.Command):

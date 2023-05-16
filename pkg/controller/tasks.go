@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,6 +16,14 @@ import (
 	csrf "github.com/utrack/gin-csrf"
 )
 
+const (
+	tasksHtml    = "tasks.html"
+	newTaskHtml  = "newTask.html"
+	editTaskHtml = "editTask.html"
+
+	taskKey = "task"
+)
+
 func (c *controller) getUserFromSession(gc *gin.Context) string {
 	return sessions.Default(gc).Get(constants.SessionUserKey).(string)
 }
@@ -24,38 +33,43 @@ func (c *controller) getTasks(gc *gin.Context) {
 
 	tasks, err := c.taskDb.GetTasks(currentUser)
 	if err != nil {
-		gc.HTML(http.StatusInternalServerError, "login.html", gin.H{"error": "Server error"})
+		logger.Error(fmt.Sprintf("Failed to get tasks from db, error: %v", err))
+		gc.HTML(http.StatusInternalServerError, loginHtml, gin.H{errorKey: serverErrorErrMsg})
 		return
 	}
+
 	tasksJson, err := json.Marshal(tasks)
 	if err != nil {
-		gc.HTML(http.StatusInternalServerError, "login.html", gin.H{"error": "Server error"})
+		logger.Error(fmt.Sprintf("Failed to marshal tasks, error: %v", err))
+		gc.HTML(http.StatusInternalServerError, loginHtml, gin.H{errorKey: serverErrorErrMsg})
 		return
 	}
 
 	csrfToken := csrf.GetToken(gc)
 
-	gc.HTML(http.StatusOK, "tasks.html", gin.H{
-		"Tasks":           string(tasksJson),
+	gc.HTML(http.StatusOK, tasksHtml, gin.H{
+		"tasks":           string(tasksJson),
 		constants.CsrfKey: csrfToken,
 	})
 }
 
 func (c *controller) getNewTask(gc *gin.Context) {
 	csrfToken := csrf.GetToken(gc)
-	gc.HTML(http.StatusOK, "newTask.html", gin.H{constants.CsrfKey: csrfToken})
+	gc.HTML(http.StatusOK, newTaskHtml, gin.H{constants.CsrfKey: csrfToken})
 }
 
 func (c *controller) postNewTask(gc *gin.Context) {
 	title := gc.PostForm("title")
 	if strings.TrimSpace(title) == "" {
-		gc.HTML(http.StatusBadRequest, "newTask.html", gin.H{"error": "Empty title"})
+		logger.Info("Empty task title")
+		gc.HTML(http.StatusBadRequest, newTaskHtml, gin.H{errorKey: "Empty title"})
 		return
 	}
 
 	description := gc.PostForm("description")
 	if strings.TrimSpace(description) == "" {
-		gc.HTML(http.StatusBadRequest, "newTask.html", gin.H{"error": "Empty description"})
+		logger.Info("Empty task description")
+		gc.HTML(http.StatusBadRequest, newTaskHtml, gin.H{errorKey: "Empty description"})
 		return
 	}
 
@@ -79,30 +93,31 @@ func (c *controller) postNewTask(gc *gin.Context) {
 	err := c.taskDb.AddTask(currentUser, task)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			if err != nil {
-				gc.HTML(http.StatusInternalServerError, "newTask.html", gin.H{
-					"error": "Server error",
-					"task":  task,
-				})
-				return
-			}
+			logger.Info(fmt.Sprintf("Task with title %s already exists", task.Title))
 
-			gc.HTML(http.StatusBadRequest, "newTask.html", gin.H{
-				"error": "Task with that title already exists",
-				"task":  task,
+			gc.HTML(http.StatusBadRequest, newTaskHtml, gin.H{
+				errorKey: "Task with that title already exists",
+				taskKey:  task,
 			})
+
 			return
 		}
-		gc.HTML(http.StatusInternalServerError, "newTask.html", gin.H{
-			"error": "Server error",
-			"task":  task,
+
+		logger.Error(fmt.Sprintf("Failed to add a task to db, error: %v", err))
+
+		gc.HTML(http.StatusInternalServerError, newTaskHtml, gin.H{
+			errorKey: serverErrorErrMsg,
+			taskKey:  task,
 		})
+
 		return
 	}
 
-	gc.HTML(http.StatusOK, "newTask.html", gin.H{
-		"success": "Added a Task successful!",
-		"task":    task,
+	logger.Info("Added a new task to db")
+
+	gc.HTML(http.StatusOK, newTaskHtml, gin.H{
+		successKey: "Added a task successful!",
+		taskKey:    task,
 	})
 }
 
@@ -113,16 +128,19 @@ func (c *controller) deleteTask(gc *gin.Context) {
 
 	err := c.taskDb.DeleteTask(currentUser, title)
 	if err != nil {
-		gc.HTML(http.StatusInternalServerError, "newTask.html", gin.H{"error": "Server error"})
+		logger.Error(fmt.Sprintf("Failed to delete a task from db, error: %v", err))
+		gc.HTML(http.StatusInternalServerError, newTaskHtml, gin.H{errorKey: serverErrorErrMsg})
 		return
 	}
 
-	gc.HTML(http.StatusOK, "newTask.html", gin.H{})
+	logger.Info("Deleted a task from db")
+
+	gc.Status(http.StatusOK)
 }
 
 func (c *controller) getUpdateTask(gc *gin.Context) {
 	csrfToken := csrf.GetToken(gc)
-	gc.HTML(http.StatusOK, "editTask.html", gin.H{constants.CsrfKey: csrfToken})
+	gc.HTML(http.StatusOK, editTaskHtml, gin.H{constants.CsrfKey: csrfToken})
 }
 
 func (c *controller) postUpdateTask(gc *gin.Context) {
@@ -130,7 +148,8 @@ func (c *controller) postUpdateTask(gc *gin.Context) {
 
 	description := gc.PostForm("description")
 	if strings.TrimSpace(description) == "" {
-		gc.HTML(http.StatusBadRequest, "editTask.html", gin.H{"error": "Empty description"})
+		logger.Info("Empty task description")
+		gc.HTML(http.StatusBadRequest, editTaskHtml, gin.H{errorKey: "Empty description"})
 		return
 	}
 
@@ -139,7 +158,8 @@ func (c *controller) postUpdateTask(gc *gin.Context) {
 	isCompletedString := gc.PostForm("completed")
 	isCompleted, err := strconv.ParseBool(isCompletedString)
 	if err != nil {
-		gc.HTML(http.StatusInternalServerError, "editTask.html", gin.H{"error": "Server error"})
+		logger.Error(fmt.Sprintf("Failed to parse 'completed' boolean, error: %v", err))
+		gc.HTML(http.StatusInternalServerError, editTaskHtml, gin.H{errorKey: serverErrorErrMsg})
 		return
 	}
 
@@ -158,13 +178,16 @@ func (c *controller) postUpdateTask(gc *gin.Context) {
 
 	err = c.taskDb.UpdateTask(currentUser, title, task)
 	if err != nil {
-		gc.HTML(http.StatusInternalServerError, "editTask.html", gin.H{"error": "Server error"})
+		logger.Error(fmt.Sprintf("Failed to update task in db, error: %v", err))
+		gc.HTML(http.StatusInternalServerError, editTaskHtml, gin.H{errorKey: serverErrorErrMsg})
 		return
 	}
 
-	gc.HTML(http.StatusOK, "editTask.html", gin.H{
-		"success": "Edited a Task successful!",
-		"task":    task,
+	logger.Info("Updated a task in db")
+
+	gc.HTML(http.StatusOK, editTaskHtml, gin.H{
+		successKey: "Edited the task successful!",
+		taskKey:    task,
 	})
 }
 
@@ -177,12 +200,14 @@ func (c *controller) postCompleteTask(gc *gin.Context) {
 
 	task, err := c.taskDb.GetTask(currentUser, title)
 	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to get task db, error: %v", err))
 		gc.Status(http.StatusInternalServerError)
 		return
 	}
 
 	completedBool, err := strconv.ParseBool(completed)
 	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to parse 'completed' boolean, error: %v", err))
 		gc.Status(http.StatusInternalServerError)
 		return
 	}
@@ -191,9 +216,12 @@ func (c *controller) postCompleteTask(gc *gin.Context) {
 
 	err = c.taskDb.UpdateTask(currentUser, title, task)
 	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to update task in db, error: %v", err))
 		gc.Status(http.StatusInternalServerError)
 		return
 	}
+
+	logger.Info("Updated a task in db successful")
 
 	gc.JSON(http.StatusOK, gin.H{
 		"completed": completedBool,
