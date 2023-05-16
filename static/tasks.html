@@ -238,7 +238,7 @@
 	}
 
 	function filterTasks() {
-		var category = categoryFilter.value.toLowerCase();
+		var category = categoryFilter.value.toLowerCase().trim();
 		var tags = tagsFilter.value.toLowerCase().split(",").map(tag => tag.trim());
 		var done = doneFilter.value;
 
