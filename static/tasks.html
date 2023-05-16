@@ -24,12 +24,6 @@
 			overflow-y: auto;
 			transform: translateX(-80%);
 		}
-
-		body,
-		html {
-			height: 100%;
-			overflow: auto;
-		}
 	</style>
 	<title>Tasks</title>
 </head>
@@ -37,11 +31,11 @@
 
 <nav class="navbar bg-dark navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
 	<div class="container-fluid">
-		<a class="navbar-brand" href="/tasks">Tasks</a>
+		<a class="navbar-brand active" aria-current="page" href="/tasks">Tasks</a>
 		<div class="collapse navbar-collapse" id="navbarSupportedContent">
 			<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 				<li class="nav-item">
-					<a class="nav-link active" aria-current="page" href="/tasks/new">Add new task</a>
+					<a class="nav-link" href="/tasks/new">Add new task</a>
 				</li>
 				<li class="nav-item">
 					<a class="nav-link" href="/passChange">Change account password</a>

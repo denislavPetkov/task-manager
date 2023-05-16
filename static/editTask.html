@@ -6,18 +6,29 @@
   <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css">
-
-  <style>
-    body,
-    html {
-      height: 100%;
-      overflow: auto;
-    }
-  </style>
 </head>
 
-<body class="p-3 mb-2 bg-dark text-white">
-  <div class="container d-flex flex-column align-items-center vh-100">
+<nav class="navbar bg-dark navbar-expand-lg bg-white">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/tasks">Tasks</a>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" href="/tasks/new">Add new task</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/passChange">Change account password</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/logout">Logout</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<body class="mb-2 bg-dark text-white">
+  <div class="container d-flex flex-column align-items-center vh-100 mt-5">
     <h1 id="taskHeading">Edit Task {{ .task.Title }}</h1>
     {{ if .error }}
     <div class="error mt-1">
@@ -60,7 +71,8 @@
       <div class=" form-group row mt-3">
         <label for="category" class="col-sm-3 text-right">Category:</label>
         <div class="col-sm-9">
-          <input type="text" id="category" name="category" value="{{ .task.Category }}">
+          <input type="text" style="height: 30px; width: 250px;" id="category" name="category"
+            value="{{ .task.Category }}">
         </div>
       </div>
 
