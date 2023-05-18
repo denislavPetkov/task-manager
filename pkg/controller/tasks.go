@@ -66,6 +66,12 @@ func (c *controller) postNewTask(gc *gin.Context) {
 		return
 	}
 
+	if len(title) > 30 {
+		logger.Info("Tittle exceeds 30 characters")
+		gc.HTML(http.StatusBadRequest, newTaskHtml, gin.H{errorKey: "Tittle exceeds 30 characters"})
+		return
+	}
+
 	description := gc.PostForm("description")
 	if strings.TrimSpace(description) == "" {
 		logger.Info("Empty task description")
