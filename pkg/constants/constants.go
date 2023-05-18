@@ -5,6 +5,7 @@ const (
 	SessionUserKey   = "user"
 	SessionIdKey     = "id"
 	SessionStoreName = "session"
+	CookieUser       = "user"
 
 	CsrfKey = "csrf"
 )

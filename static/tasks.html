@@ -71,6 +71,8 @@
 					<a class="nav-link" href="/logout">Logout</a>
 				</li>
 			</ul>
+			<label class="nav-link" id="currentUser">
+			</label>
 			<a class="navbar-brand">
 				<button id="recordButton" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top"
 					title="Use the format &quot;please {Command} task {TaskTitle}&quot;. Supported commands: create, edit and delete.">
@@ -161,6 +163,17 @@
 </html>
 
 <script>
+	function getCookie(name) {
+		function escape(s) { return s.replace(/([.*+?\^$(){}|\[\]\/\\])/g, '\\$1'); }
+		var match = document.cookie.match(RegExp('(?:^|;\\s*)' + escape(name) + '=([^;]*)'));
+		return match ? match[1] : null;
+	}
+
+	var currentUser = document.getElementById("currentUser");
+	var value = decodeURIComponent(getCookie("user"));
+
+	currentUser.textContent = "Logged in as: " + value;
+
 	var tasks = JSON.parse("{{ .tasks }}");
 
 	for (var i = 0; i < tasks.length; i++) {

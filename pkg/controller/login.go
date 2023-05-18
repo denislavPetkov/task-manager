@@ -112,5 +112,6 @@ func (c *controller) postLogin(gc *gin.Context) {
 
 	logger.Info("Login successful")
 
+	gc.SetCookie(constants.CookieUser, email, 0, "", "localhost", true, false)
 	gc.Redirect(http.StatusFound, "/tasks")
 }
