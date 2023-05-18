@@ -7,6 +7,11 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/gh/mattdiamond/Recorderjs/dist/recorder.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://momentjs.com/downloads/moment.min.js"></script>
+	<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+	<script src="https://cdn.datatables.net/plug-ins/1.11.4/sorting/datetime-moment.js"></script>
 	<style>
 		.notification-badge {
 			position: relative;
@@ -23,6 +28,28 @@
 			max-height: calc(100vh - 200px);
 			overflow-y: auto;
 			transform: translateX(-80%);
+		}
+
+		.sorting::after,
+		.sorting_asc::after,
+		.sorting_desc::after {
+			content: "";
+			display: inline-block;
+			vertical-align: middle;
+			width: 0;
+			height: 0;
+			border-left: 4px solid transparent;
+			border-right: 4px solid transparent;
+		}
+
+		.sorting_asc::after {
+			border-bottom: 10px solid rgb(0, 255, 17);
+			margin-left: 3px;
+		}
+
+		.sorting_desc::after {
+			border-top: 10px solid rgb(0, 255, 17);
+			margin-left: 3px;
 		}
 	</style>
 	<title>Tasks</title>
@@ -112,7 +139,7 @@
 		</div>
 	</nav>
 
-	<table class="table table-hover table-sm bg-transparent">
+	<table class="table table-hover table-sm bg-transparent" id="taskTable">
 		<thead class="table-dark border-4 border-secondary">
 			<tr>
 				<th class="text-center">Done</th>
@@ -159,6 +186,34 @@
 			editButton.disabled = true;
 		}
 	}
+
+	$(document).ready(function () {
+		$.fn.dataTable.moment('DD-MMM-YYYY');
+
+		$.extend($.fn.dataTableExt.oSort, {
+			'date-uk-pre': function (dateStr) {
+				return moment(dateStr, 'DD-MMM-YYYY').unix();
+			},
+
+			'date-uk-asc': function (a, b) {
+				return a - b;
+			},
+
+			'date-uk-desc': function (a, b) {
+				return b - a;
+			}
+		});
+
+		$('#taskTable').DataTable({
+			paging: false,
+			searching: false,
+			columnDefs: [{
+				type: 'date-uk',
+				targets: [2]
+			}],
+			order: []
+		});
+	});
 
 	// Add event listeners to the filter input fields
 	var categoryFilter = document.getElementById("category-filter");
@@ -215,7 +270,23 @@
 		});
 	}
 
+	// function sortTable(columnIndex) {
+	// 	var table = $('#taskTable').DataTable();
+	// 	var currentOrder = table.order()[0];
+
+	// 	if (currentOrder[1] === 'asc') {
+	// 		table.order([[columnIndex, 'desc']]).draw();
+	// 	} else {
+	// 		table.order([[columnIndex, 'asc']]).draw();
+	// 	}
+	// }
+
 	function deleteTask(title, rowIndex) {
+
+		if (!confirm('Are you sure you want to delete task ' + title + '?')) {
+			return
+		}
+
 		$.ajax({
 			url: window.location.href + '/delete/' + title,
 			type: 'DELETE',
