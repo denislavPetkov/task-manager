@@ -5,16 +5,24 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
 const (
 	InvalidKeyErr = "redis: nil"
 )
 
+var (
+	logger *zap.Logger
+)
+
+func init() {
+	logger = zap.L().Named("user-db")
+}
+
 type Redis interface {
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 	Get(ctx context.Context, key string) (string, error)
-	HSet(ctx context.Context, key string, values ...interface{}) error
 	Exists(ctx context.Context, keys ...string) (int64, error)
 }
 

@@ -23,11 +23,13 @@ type mongodbConfig struct {
 func NewMongodbConfig() (MongodbConfig, error) {
 	connectionUri, ok := os.LookupEnv(MONGODB_CONNECTION_URI)
 	if !ok {
+		logger.Error(fmt.Sprintf("Env var %s missing", MONGODB_CONNECTION_URI))
 		return mongodbConfig{}, fmt.Errorf("env var %s missing", MONGODB_CONNECTION_URI)
 	}
 
 	databaseName, ok := os.LookupEnv(MONGODB_DATABASE_NAME)
 	if !ok {
+		logger.Error(fmt.Sprintf("Env var %s missing", MONGODB_DATABASE_NAME))
 		return mongodbConfig{}, fmt.Errorf("env var %s missing", MONGODB_DATABASE_NAME)
 	}
 

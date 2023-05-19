@@ -13,16 +13,14 @@ var (
 	logger *zap.Logger
 )
 
-func init() {
-	logger = zap.L().Named("nlp")
-}
-
 type Command struct {
 	Command   string
 	TaskTitle string
 }
 
 func init() {
+	logger = zap.L().Named("nlp")
+
 	nl = nlp.New()
 
 	err := nl.RegisterModel(Command{}, taskSamples, nlp.WithTimeFormat("2006"))

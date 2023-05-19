@@ -22,6 +22,7 @@ func (m *mongodbInstance) CreateCollection(name string) error {
 		if match, _ := regexp.MatchString(`Collection .* already exists`, err.Error()); match {
 			return nil
 		}
+		logger.Error("Failed to create a new collection")
 		return err
 	}
 
@@ -33,8 +34,11 @@ func (m *mongodbInstance) CreateCollection(name string) error {
 		Options: options.Index().SetUnique(true),
 	})
 	if err != nil {
+		logger.Error("Failed to set the title as a unique index to the new collection")
 		return err
 	}
+
+	logger.Info("Created a new collection successfully")
 
 	return err
 }
@@ -43,10 +47,12 @@ func (m *mongodbInstance) AddTask(collection string, task model.Task) error {
 	dbCollection := m.mongodbDatabase.Collection(collection)
 
 	_, err := dbCollection.InsertOne(ctx, task)
-
 	if err != nil {
+		logger.Error("Failed to insert task to the collection")
 		return fmt.Errorf("failed to add task %v to the %s collection, error: %w", task, collection, err)
 	}
+
+	logger.Info("Inserted a new task to the collection successfully")
 
 	return nil
 }
@@ -63,12 +69,16 @@ func (m *mongodbInstance) UpdateTask(collection, taskTitle string, updatedtask m
 		updatedtask,
 	)
 	if err != nil {
+		logger.Error("Failed to update task in the collection")
 		return fmt.Errorf("failed to update task '%s' in %s collection, error: %w", taskTitle, collection, err)
 	}
 
 	if result.MatchedCount == 0 {
+		logger.Error("Task not found in the collection")
 		return mongo.ErrNoDocuments
 	}
+
+	logger.Info("Updated a task in the collection successfully")
 
 	return nil
 }
@@ -88,8 +98,11 @@ func (m *mongodbInstance) GetTask(collection, taskTitle string) (model.Task, err
 
 	err := result.Decode(&task)
 	if err != nil {
+		logger.Error("Failed to decode db task into object")
 		return model.Task{}, fmt.Errorf("failed to decode task into object, error: %w", err)
 	}
+
+	logger.Info("Got a task from the collection successfully")
 
 	return task, nil
 }
@@ -99,6 +112,7 @@ func (m *mongodbInstance) GetTasks(collection string) ([]model.Task, error) {
 
 	cursor, err := dbCollection.Find(ctx, bson.D{})
 	if err != nil {
+		logger.Error("Failed to get tasks from the collection")
 		return []model.Task{}, fmt.Errorf("failed to get tasks from %s collection, error: %w", collection, err)
 	}
 
@@ -106,8 +120,11 @@ func (m *mongodbInstance) GetTasks(collection string) ([]model.Task, error) {
 
 	err = cursor.All(ctx, &tasks)
 	if err != nil {
+		logger.Error("Failed to get tasks from the collection")
 		return []model.Task{}, fmt.Errorf("failed to get tasks from %s collection, error: %w", collection, err)
 	}
+
+	logger.Info("Got tasks from the collection successfully")
 
 	return tasks, nil
 }
@@ -123,10 +140,12 @@ func (m *mongodbInstance) DeleteTask(collection, taskTitle string) error {
 			},
 		},
 	)
-
 	if err != nil {
+		logger.Error("Failed to get delete task from the collection")
 		return fmt.Errorf("failed to delete task '%s' from %s collection, error: %w", taskTitle, collection, err)
 	}
+
+	logger.Info("Delete task from the collection successfully")
 
 	return nil
 }

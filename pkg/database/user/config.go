@@ -1,7 +1,7 @@
 package database
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"strconv"
 )
@@ -36,16 +36,19 @@ func NewRedisConfig() (RedisConfig, error) {
 
 	address, ok := os.LookupEnv(REDIS_ADDRESS)
 	if !ok {
-		return redisConfig{}, errors.New("no adress env var")
+		logger.Error(fmt.Sprintf("Env var %s missing", REDIS_ADDRESS))
+		return redisConfig{}, fmt.Errorf("env var %s missing", REDIS_ADDRESS)
 	}
 
 	password, ok := os.LookupEnv(REDIS_PASSWORD)
 	if !ok {
-		return redisConfig{}, errors.New("no password env var")
+		logger.Error(fmt.Sprintf("Env var %s missing", REDIS_PASSWORD))
+		return redisConfig{}, fmt.Errorf("env var %s missing", REDIS_PASSWORD)
 	}
 
 	dbInstance, err := strconv.Atoi(getEnv(REDIS_DATABASE, ""))
 	if err != nil {
+		logger.Info(fmt.Sprintf("Using default redis instance %v", defaultRedisInstance))
 		dbInstance = defaultRedisInstance
 	}
 
@@ -77,6 +80,7 @@ func (c redisConfig) GetDbInstance() int {
 func getEnv(key, defaultValue string) string {
 	value, exists := os.LookupEnv(key)
 	if !exists {
+		logger.Info(fmt.Sprintf("Env var %s missing, using default value %s", key, defaultValue))
 		value = defaultValue
 	}
 	return value
