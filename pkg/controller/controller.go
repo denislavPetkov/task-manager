@@ -180,6 +180,12 @@ func (c *controller) registerPaths() {
 
 	c.ginRouter.POST("/audio", c.postAudio)
 
+	c.ginRouter.GET("/recoverPassword", c.getPasswordRecover)
+	c.ginRouter.POST("/recoverPassword", c.postPasswordRecover)
+
+	c.ginRouter.GET("/newPassword/:email", c.getNewPassword)
+	c.ginRouter.POST("/newPassword", c.postNewPassword)
+
 	c.ginRouter.GET("/register", c.getRegister)
 	c.ginRouter.POST("/register", c.postRegister)
 
@@ -190,8 +196,8 @@ func (c *controller) registerPaths() {
 	authenticated.Use(middleware.Authentication())
 	{
 
-		authenticated.GET("/passChange", c.getPasswordChange)
-		authenticated.POST("/passChange", c.postPasswordChange)
+		authenticated.GET("/changePassword", c.getPasswordChange)
+		authenticated.POST("/changePassword", c.postPasswordChange)
 
 		authenticated.GET("/tasks/edit/:title", c.getUpdateTask)
 		authenticated.POST("/tasks/edit/:title", c.postUpdateTask)

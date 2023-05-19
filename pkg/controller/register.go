@@ -88,7 +88,7 @@ func (c *controller) postRegister(gc *gin.Context) {
 
 	err = c.userDb.Set(context.TODO(), email, hashedPassword, 0)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to create create a user in db, error: %v", err))
+		logger.Error(fmt.Sprintf("Failed to create a user in db, error: %v", err))
 
 		gc.HTML(http.StatusInternalServerError, registerHtml, gin.H{
 			errorKey:          "Server error",
@@ -100,5 +100,5 @@ func (c *controller) postRegister(gc *gin.Context) {
 
 	logger.Info("User registration successful")
 
-	gc.HTML(http.StatusCreated, registerHtml, gin.H{"success": "Registration successful!"})
+	gc.HTML(http.StatusCreated, registerHtml, gin.H{successKey: "Registration successful!"})
 }
