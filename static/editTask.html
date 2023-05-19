@@ -104,6 +104,18 @@
 </html>
 
 <script>
+  var dateInput = document.getElementById("deadline");
+
+  dateInput.addEventListener("input", function () {
+    var selectedDate = dateInput.value;
+    var currentDate = new Date().toISOString().split("T")[0];
+
+    if (selectedDate < currentDate && oldDate != selectedDate) {
+      dateInput.value = oldDate;
+      alert("Cannot use an older date");
+    }
+  });
+
   var title = window.location.pathname.split('/').pop();
   var task = JSON.parse(localStorage.getItem(title));
 
@@ -151,6 +163,7 @@
       }
     }
 
+    var oldDate = dateInput.value;
   }
 
   var addTagButton = document.getElementById('add-tag-button');

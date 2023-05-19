@@ -94,6 +94,10 @@
 </html>
 
 <script>
+    var currentDate = new Date().toISOString().split("T")[0];
+    var dateInput = document.getElementById("deadline");
+    dateInput.min = currentDate;
+
     var addTagButton = document.getElementById('add-tag-button');
     var tagsContainer = document.getElementById('tags-container');
 
