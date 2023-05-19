@@ -88,9 +88,6 @@ func (m *mongodbInstance) GetTask(collection, taskTitle string) (model.Task, err
 
 	err := result.Decode(&task)
 	if err != nil {
-		// if errors.Is(err, mongo.ErrNoDocuments) {
-		// 	return model.Task{}, fmt.Errorf("failed to get tasks from %s collection, error: %w", collection, err)
-		// }
 		return model.Task{}, fmt.Errorf("failed to decode task into object, error: %w", err)
 	}
 

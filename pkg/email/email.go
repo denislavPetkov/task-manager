@@ -2,9 +2,10 @@ package email
 
 import (
 	"fmt"
-	"log"
 	"net/smtp"
 	"os"
+
+	"go.uber.org/zap"
 )
 
 const (
@@ -15,7 +16,13 @@ const (
 var (
 	serviceAccountUsername string
 	serviceAccountPassword string
+
+	logger *zap.Logger
 )
+
+func init() {
+	logger = zap.L().Named("email")
+}
 
 func init() {
 	serviceAccountUsername = os.Getenv("EMAIL_USERNAME")
@@ -34,7 +41,7 @@ func SendRecoveryEmail(recipient, url string) error {
 		serviceAccountUsername, []string{recipient}, []byte(msg))
 
 	if err != nil {
-		log.Printf("smtp error: %s", err)
+		logger.Error(fmt.Sprintf("Failed to send an email, error: %v", err))
 		return err
 	}
 

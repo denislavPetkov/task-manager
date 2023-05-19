@@ -4,11 +4,18 @@ import (
 	"fmt"
 
 	"github.com/shixzie/nlp"
+	"go.uber.org/zap"
 )
 
 var (
 	nl *nlp.NL
+
+	logger *zap.Logger
 )
+
+func init() {
+	logger = zap.L().Named("nlp")
+}
 
 type Command struct {
 	Command   string
@@ -20,11 +27,13 @@ func init() {
 
 	err := nl.RegisterModel(Command{}, taskSamples, nlp.WithTimeFormat("2006"))
 	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to register nlp model, error: %v", err))
 		panic(err)
 	}
 
 	err = nl.Learn()
 	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to teach the nlp, error: %v", err))
 		panic(err)
 	}
 }
@@ -34,7 +43,7 @@ func GetCommand(commandString string) Command {
 	if cm, ok := command.(*Command); ok {
 		return *cm
 	} else {
-		fmt.Println("Failed")
+		logger.Info(fmt.Sprintf("Could not type assert command string %s to a command object", commandString))
 		return Command{}
 	}
 }

@@ -60,5 +60,7 @@ func (c *controller) postPasswordRecover(gc *gin.Context) {
 		return
 	}
 
+	logger.Info(fmt.Sprintf("User with %s email sent a recovery password email", userEmail))
+
 	gc.HTML(http.StatusOK, passwordResetHtml, gin.H{successKey: "Sent a recovery password email!"})
 }
