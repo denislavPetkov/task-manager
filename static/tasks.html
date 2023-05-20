@@ -147,6 +147,7 @@
 				<th class="text-center">Done</th>
 				<th class="text-center">Title</th>
 				<th class="text-center">Deadline</th>
+				<th class="text-center">Notification Deadline</th>
 				<th class="text-center">Description</th>
 				<th class="text-center">Category</th>
 				<th class="text-center">Tags</th>
@@ -176,27 +177,30 @@
 
 	var tasks = JSON.parse("{{ .tasks }}");
 
-	for (var i = 0; i < tasks.length; i++) {
-		var task = tasks[i];
+	if (tasks != null) {
+		for (var i = 0; i < tasks.length; i++) {
+			var task = tasks[i];
 
-		var tr = document.createElement("tr");
-		tr.classList.add("text-light");
+			var tr = document.createElement("tr");
+			tr.classList.add("text-light");
 
-		tr.innerHTML = '<td class="text-center"><input type="checkbox" onclick="markAsDone(this, ' + i + ')" ' +
-			(task.completed ? 'checked' : '') + '></td>' +
-			"<td class='text-center text-light'>" + task.title + "</td>" +
-			"<td class='text-center'>" + new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ /g, '-') + "</td>" +
-			"<td class='text-center'>" + task.description + "</td>" +
-			"<td class='text-center'>" + task.category + "</td>" +
-			"<td class='text-center'>" + (task.tags ? task.tags.join(", ") : "") + "</td>" +
-			'<td class="text-center"><button type="button" class="btn btn-outline-warning" onclick="editTask(\'' + task.title + '\')">Edit</button></td>' +
-			'<td class="text-center"><button type="button" class="btn btn-outline-danger" onclick="deleteTask(\'' + task.title + '\', ' + i + ')">Delete</button></td>';
-		document.querySelector("table tbody").appendChild(tr);
+			tr.innerHTML = '<td class="text-center"><input type="checkbox" onclick="markAsDone(this, ' + i + ')" ' +
+				(task.completed ? 'checked' : '') + '></td>' +
+				"<td class='text-center'>" + task.title + "</td>" +
+				"<td class='text-center'>" + new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ /g, '-') + "</td>" +
+				"<td class='text-center'>" + task.notificationDeadline / (1000 * 1000 * 1000 * 60 * 60 * 24) + ' days' + "</td>" +
+				"<td class='text-center'>" + task.description + "</td>" +
+				"<td class='text-center'>" + task.category + "</td>" +
+				"<td class='text-center'>" + (task.tags ? task.tags.join(", ") : "") + "</td>" +
+				'<td class="text-center"><button type="button" class="btn btn-outline-warning" onclick="editTask(\'' + task.title + '\')">Edit</button></td>' +
+				'<td class="text-center"><button type="button" class="btn btn-outline-danger" onclick="deleteTask(\'' + task.title + '\', ' + i + ')">Delete</button></td>';
+			document.querySelector("table tbody").appendChild(tr);
 
-		if (task.completed) {
-			tr.classList.add("text-decoration-line-through");
-			var editButton = tr.querySelector(".btn-outline-warning");
-			editButton.disabled = true;
+			if (task.completed) {
+				tr.classList.add("text-decoration-line-through");
+				var editButton = tr.querySelector(".btn-outline-warning");
+				editButton.disabled = true;
+			}
 		}
 	}
 
@@ -283,17 +287,6 @@
 		});
 	}
 
-	// function sortTable(columnIndex) {
-	// 	var table = $('#taskTable').DataTable();
-	// 	var currentOrder = table.order()[0];
-
-	// 	if (currentOrder[1] === 'asc') {
-	// 		table.order([[columnIndex, 'desc']]).draw();
-	// 	} else {
-	// 		table.order([[columnIndex, 'asc']]).draw();
-	// 	}
-	// }
-
 	function deleteTask(title, rowIndex) {
 
 		if (!confirm('Are you sure you want to delete task ' + title + '?')) {
@@ -308,6 +301,8 @@
 			},
 			success: function (result) {
 				document.querySelector("table tbody").deleteRow(rowIndex);
+				tasks.splice(rowIndex, 1);
+				updateTaskNotifications();
 			}
 		});
 	}
@@ -329,8 +324,8 @@
 		var tasks = document.querySelectorAll("table tbody tr");
 		for (var i = 0; i < tasks.length; i++) {
 			var task = tasks[i];
-			var categoryText = task.querySelector("td:nth-of-type(5)").textContent.toLowerCase();
-			var tagsText = task.querySelector("td:nth-of-type(6)").textContent.toLowerCase();
+			var categoryText = task.querySelector("td:nth-of-type(6)").textContent.toLowerCase();
+			var tagsText = task.querySelector("td:nth-of-type(7)").textContent.toLowerCase();
 			var doneValue = task.querySelector("td:nth-of-type(1) input").checked;
 
 			var tagsMatch = true;
@@ -446,19 +441,23 @@
 		var reminders = 0;
 		tasksWithReminders = [];
 
-		tasks.forEach(function (task) {
-			if (task.completed) {
-				return
-			}
-			var deadlineDatetime = new Date(task.deadline);
-			var timeDiff = deadlineDatetime.getTime() - currentDatetime.getTime();
-			var hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60)); // Convert milliseconds to hours
+		if (tasks != null) {
+			tasks.forEach(function (task) {
+				if (task.completed) {
+					return
+				}
 
-			if (hoursDiff <= 24 * 6) {
-				reminders++;
-				tasksWithReminders.push([task.title, hoursDiff]);
-			}
-		});
+				var deadlineDatetime = new Date(task.deadline);
+				var timeDiff = deadlineDatetime.getTime() - currentDatetime.getTime();
+				var hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60)); // Convert milliseconds to hours
+				var taskNotificationDeadlineHours = task.notificationDeadline / (1000 * 1000 * 1000 * 60 * 60);
+
+				if (hoursDiff <= taskNotificationDeadlineHours) {
+					reminders++;
+					tasksWithReminders.push([task.title, hoursDiff]);
+				}
+			});
+		}
 
 		var notificationsSpan = document.getElementById("notifications");
 		notificationsSpan.innerText = reminders;

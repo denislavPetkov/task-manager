@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/denislavpetkov/task-manager/pkg/constants"
 	"github.com/denislavpetkov/task-manager/pkg/model"
@@ -29,27 +30,33 @@ func (c *controller) getUserFromSession(gc *gin.Context) string {
 }
 
 func (c *controller) getTasks(gc *gin.Context) {
+	csrfToken := csrf.GetToken(gc)
+
 	currentUser := c.getUserFromSession(gc)
 
 	tasks, err := c.taskDb.GetTasks(currentUser)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to get tasks from db, error: %v", err))
-		gc.HTML(http.StatusInternalServerError, loginHtml, gin.H{errorKey: serverErrorErrMsg})
+		gc.HTML(http.StatusInternalServerError, loginHtml, gin.H{
+			constants.CsrfKey: csrfToken,
+			errorKey:          serverErrorErrMsg,
+		})
 		return
 	}
 
 	tasksJson, err := json.Marshal(tasks)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to marshal tasks, error: %v", err))
-		gc.HTML(http.StatusInternalServerError, loginHtml, gin.H{errorKey: serverErrorErrMsg})
+		gc.HTML(http.StatusInternalServerError, loginHtml, gin.H{
+			constants.CsrfKey: csrfToken,
+			errorKey:          serverErrorErrMsg,
+		})
 		return
 	}
 
-	csrfToken := csrf.GetToken(gc)
-
 	gc.HTML(http.StatusOK, tasksHtml, gin.H{
-		"tasks":           string(tasksJson),
 		constants.CsrfKey: csrfToken,
+		"tasks":           string(tasksJson),
 	})
 }
 
@@ -59,51 +66,77 @@ func (c *controller) getNewTask(gc *gin.Context) {
 }
 
 func (c *controller) postNewTask(gc *gin.Context) {
+	csrfToken := csrf.GetToken(gc)
+
 	title := gc.PostForm("title")
 	if strings.TrimSpace(title) == "" {
 		logger.Info("Empty task title")
-		gc.HTML(http.StatusBadRequest, newTaskHtml, gin.H{errorKey: "Empty title"})
+		gc.HTML(http.StatusBadRequest, newTaskHtml, gin.H{
+			constants.CsrfKey: csrfToken,
+			errorKey:          "Empty title",
+		})
 		return
 	}
 
 	if len(title) > 30 {
 		logger.Info("Tittle exceeds 30 characters")
-		gc.HTML(http.StatusBadRequest, newTaskHtml, gin.H{errorKey: "Tittle exceeds 30 characters"})
+		gc.HTML(http.StatusBadRequest, newTaskHtml, gin.H{
+			constants.CsrfKey: csrfToken,
+			errorKey:          "Tittle exceeds 30 characters",
+		})
 		return
 	}
 
 	description := gc.PostForm("description")
 	if strings.TrimSpace(description) == "" {
 		logger.Info("Empty task description")
-		gc.HTML(http.StatusBadRequest, newTaskHtml, gin.H{errorKey: "Empty description"})
+		gc.HTML(http.StatusBadRequest, newTaskHtml, gin.H{
+			constants.CsrfKey: csrfToken,
+			errorKey:          "Empty description",
+		})
 		return
 	}
 
 	deadline := gc.PostForm("deadline")
 	category := gc.PostForm("category")
 	tags := gc.PostFormArray("tags[]")
+	notificationDeadline := gc.PostForm("notificationDeadline")
+
+	notificationDeadlineDuration, err := time.ParseDuration(notificationDeadline)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to parse notification deadline, error: %v", err))
+
+		gc.HTML(http.StatusInternalServerError, newTaskHtml, gin.H{
+			constants.CsrfKey: csrfToken,
+			errorKey:          serverErrorErrMsg,
+		})
+
+		return
+	}
 
 	title = strings.ReplaceAll(strings.Trim(title, " "), " ", "-")
 
 	task := model.Task{
-		Title:       title,
-		Description: description,
-		Category:    category,
-		Tags:        tags,
-		Deadline:    deadline,
-		Completed:   false,
+		Title:                title,
+		Description:          description,
+		Category:             category,
+		Tags:                 tags,
+		Deadline:             deadline,
+		Completed:            false,
+		NotificationDeadline: notificationDeadlineDuration,
 	}
 
 	currentUser := c.getUserFromSession(gc)
 
-	err := c.taskDb.AddTask(currentUser, task)
+	err = c.taskDb.AddTask(currentUser, task)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			logger.Info(fmt.Sprintf("Task with title %s already exists", task.Title))
 
 			gc.HTML(http.StatusBadRequest, newTaskHtml, gin.H{
-				errorKey: "Task with that title already exists",
-				taskKey:  task,
+				constants.CsrfKey: csrfToken,
+				errorKey:          "Task with that title already exists",
+				taskKey:           task,
 			})
 
 			return
@@ -112,8 +145,9 @@ func (c *controller) postNewTask(gc *gin.Context) {
 		logger.Error(fmt.Sprintf("Failed to add a task to db, error: %v", err))
 
 		gc.HTML(http.StatusInternalServerError, newTaskHtml, gin.H{
-			errorKey: serverErrorErrMsg,
-			taskKey:  task,
+			constants.CsrfKey: csrfToken,
+			errorKey:          serverErrorErrMsg,
+			taskKey:           task,
 		})
 
 		return
@@ -122,8 +156,9 @@ func (c *controller) postNewTask(gc *gin.Context) {
 	logger.Info("Added a new task to db")
 
 	gc.HTML(http.StatusOK, newTaskHtml, gin.H{
-		successKey: "Added a task successful!",
-		taskKey:    task,
+		constants.CsrfKey: csrfToken,
+		successKey:        "Added a task successful!",
+		taskKey:           task,
 	})
 }
 
@@ -150,12 +185,17 @@ func (c *controller) getUpdateTask(gc *gin.Context) {
 }
 
 func (c *controller) postUpdateTask(gc *gin.Context) {
+	csrfToken := csrf.GetToken(gc)
+
 	title := gc.Param("title")
 
 	description := gc.PostForm("description")
 	if strings.TrimSpace(description) == "" {
 		logger.Info("Empty task description")
-		gc.HTML(http.StatusBadRequest, editTaskHtml, gin.H{errorKey: "Empty description"})
+		gc.HTML(http.StatusBadRequest, editTaskHtml, gin.H{
+			constants.CsrfKey: csrfToken,
+			errorKey:          "Empty description",
+		})
 		return
 	}
 
@@ -165,35 +205,57 @@ func (c *controller) postUpdateTask(gc *gin.Context) {
 	isCompleted, err := strconv.ParseBool(isCompletedString)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to parse 'completed' boolean, error: %v", err))
-		gc.HTML(http.StatusInternalServerError, editTaskHtml, gin.H{errorKey: serverErrorErrMsg})
+		gc.HTML(http.StatusInternalServerError, editTaskHtml, gin.H{
+			constants.CsrfKey: csrfToken,
+			errorKey:          serverErrorErrMsg,
+		})
 		return
 	}
 
 	deadline := gc.PostForm("deadline")
 
+	notificationDeadline := gc.PostForm("notificationDeadline")
+
+	notificationDeadlineDuration, err := time.ParseDuration(notificationDeadline)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to parse notification deadline, error: %v", err))
+
+		gc.HTML(http.StatusInternalServerError, editTaskHtml, gin.H{
+			constants.CsrfKey: csrfToken,
+			errorKey:          serverErrorErrMsg,
+		})
+
+		return
+	}
+
 	currentUser := c.getUserFromSession(gc)
 
 	task := model.Task{
-		Title:       title,
-		Description: description,
-		Category:    category,
-		Tags:        tags,
-		Deadline:    deadline,
-		Completed:   isCompleted,
+		Title:                title,
+		Description:          description,
+		Category:             category,
+		Tags:                 tags,
+		Deadline:             deadline,
+		Completed:            isCompleted,
+		NotificationDeadline: notificationDeadlineDuration,
 	}
 
 	err = c.taskDb.UpdateTask(currentUser, title, task)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to update task in db, error: %v", err))
-		gc.HTML(http.StatusInternalServerError, editTaskHtml, gin.H{errorKey: serverErrorErrMsg})
+		gc.HTML(http.StatusInternalServerError, editTaskHtml, gin.H{
+			constants.CsrfKey: csrfToken,
+			errorKey:          serverErrorErrMsg,
+		})
 		return
 	}
 
 	logger.Info("Updated a task in db")
 
 	gc.HTML(http.StatusOK, editTaskHtml, gin.H{
-		successKey: "Edited the task successful!",
-		taskKey:    task,
+		constants.CsrfKey: csrfToken,
+		successKey:        "Edited the task successful!",
+		taskKey:           task,
 	})
 }
 

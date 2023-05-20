@@ -95,6 +95,12 @@ func (c *controller) postLogin(gc *gin.Context) {
 	err = session.Save()
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to save current session, error: %v", err))
+
+		gc.HTML(http.StatusInternalServerError, loginHtml, gin.H{
+			errorKey:          serverErrorErrMsg,
+			constants.CsrfKey: csrfToken,
+		})
+
 		return
 	}
 

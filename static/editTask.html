@@ -60,6 +60,22 @@
       </div>
 
       <div class=" form-group row mt-3">
+        <label for="notificationDeadline" class="col-sm-3 text-right">Notification Deadline:*</label>
+        <div class="col-sm-4">
+          <select class="form-select" name="notificationDeadline" id="notificationDeadline"
+            aria-label="Default select example">
+            <option selected>Select notification deadline</option>
+            <option value="24h">One day</option>
+            <option value="48h">Two days</option>
+            <option value="72h">Three days</option>
+            <option value="96h">Four days</option>
+            <option value="120h">Five days</option>
+            <option value="144h">Six days</option>
+          </select>
+        </div>
+      </div>
+
+      <div class=" form-group row mt-3">
         <label for="description" class="col-sm-3  text-right">Task Description*:</label>
         <div class="col-sm-9">
           <textarea id="description" name="description" required
@@ -132,6 +148,7 @@
     document.querySelector('#description').value = task.description;
     document.querySelector('#category').value = task.category;
     document.querySelector('#completed').value = task.completed;
+    document.querySelector('#notificationDeadline').selectedIndex = task.notificationDeadline / (1000 * 1000 * 1000 * 60 * 60 * 24); // convert nanoseconds to days
 
     var tagsInput = document.querySelector('#tags-container');
 
