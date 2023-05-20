@@ -76,7 +76,7 @@ func (c *controller) postLogin(gc *gin.Context) {
 		return
 	}
 
-	sessionToken, err := crypto.GenerateToken(email)
+	sessionToken, err := crypto.GenerateToken()
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to get session token, error: %v", err))
 

@@ -37,3 +37,14 @@ func (r *redisInstance) Exists(ctx context.Context, keys ...string) (int64, erro
 
 	return result, err
 }
+
+func (r *redisInstance) Del(ctx context.Context, keys ...string) (int64, error) {
+	result, err := r.redisClient.Del(ctx, keys...).Result()
+	if err != nil {
+		logger.Error("Failed to delete keys")
+	}
+
+	logger.Info("Deleted keys successfully")
+
+	return result, err
+}

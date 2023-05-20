@@ -120,7 +120,7 @@ func (c *controller) initRedis() error {
 func (c *controller) initSessionStore(redisConfig userdb.RedisConfig) error {
 	logger.Info("Initializating session store")
 
-	redisStoreToken, err := crypto.GenerateToken(redisConfig.GetPassword())
+	redisStoreToken, err := crypto.GenerateToken()
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (c *controller) initSessionStore(redisConfig userdb.RedisConfig) error {
 		HttpOnly: true,
 	})
 
-	csrfSecretToken, err := crypto.GenerateToken(redisConfig.GetPassword())
+	csrfSecretToken, err := crypto.GenerateToken()
 	if err != nil {
 		return err
 	}

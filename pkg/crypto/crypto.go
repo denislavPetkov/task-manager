@@ -1,11 +1,18 @@
 package crypto
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
+)
+
+const (
+	tokenLength = 32
 )
 
 var (
@@ -16,8 +23,9 @@ func init() {
 	logger = zap.L().Named("crypto")
 }
 
-func GenerateToken(input string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(input), bcrypt.DefaultCost)
+func GenerateToken() (string, error) {
+	buffer := make([]byte, tokenLength)
+	_, err := rand.Read(buffer)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to generate a random token, error: %v", err))
 		return "", err
@@ -25,7 +33,7 @@ func GenerateToken(input string) (string, error) {
 
 	logger.Info("Generated a random token successfully")
 
-	return base64.StdEncoding.EncodeToString(hash), nil
+	return base64.RawURLEncoding.EncodeToString(buffer), nil
 }
 
 func GetHashedPassword(password string) (string, error) {
@@ -47,4 +55,11 @@ func IsHashedPasswordCorrect(password, hashedPassword string) error {
 	hasedPasswordBytes := []byte(hashedPassword)
 
 	return bcrypt.CompareHashAndPassword(hasedPasswordBytes, passwordBytes)
+}
+
+func Hash(input string) string {
+	hash := sha256.Sum256([]byte(input))
+	hashString := hex.EncodeToString(hash[:])
+
+	return hashString
 }
