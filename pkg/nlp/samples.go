@@ -4,7 +4,6 @@ var (
 	CreateCommands = []string{
 		"add", "add a",
 		"create", "create a",
-		"new",
 	}
 
 	EditCommands = []string{
