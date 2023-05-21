@@ -88,7 +88,7 @@ func (c *controller) init() error {
 func (c *controller) initGin() {
 	logger.Info("Initializating gin")
 
-	gin.SetMode(gin.ReleaseMode)
+	// gin.SetMode(gin.ReleaseMode)
 
 	c.ginRouter = gin.Default()
 

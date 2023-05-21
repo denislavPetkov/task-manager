@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/denislavpetkov/task-manager/pkg/constants"
+	smtpfacade "github.com/denislavpetkov/task-manager/pkg/facade/net/smtp"
 	"go.uber.org/zap"
 )
 
@@ -37,7 +38,7 @@ func SendRecoveryEmail(recipient, url string) error {
 		"Subject: Password Recovery\n\n" +
 		fmt.Sprintf("Set a new password here: %s\nYou have %v before the link expires.", url, constants.PasswordRecoveryTokenExpiration)
 
-	err := smtp.SendMail(fmt.Sprintf("%s%s", gmailHost, gmailHostPort),
+	err := smtpfacade.GetSmtpInstance().SendMail(fmt.Sprintf("%s%s", gmailHost, gmailHostPort),
 		smtp.PlainAuth("", serviceAccountUsername, serviceAccountPassword, gmailHost),
 		serviceAccountUsername, []string{recipient}, []byte(msg))
 
