@@ -44,7 +44,7 @@ func (c *controller) postLogin(gc *gin.Context) {
 	hashedPassword, err := c.userDb.Get(context.TODO(), email)
 	if err != nil {
 		if err.Error() == database.InvalidKeyErr {
-			logger.Error("Invalid login credentials")
+			logger.Info("Invalid login credentials")
 
 			gc.HTML(http.StatusBadRequest, loginHtml, gin.H{
 				errorKey:          wrongCredentialsErrMsg,
@@ -66,7 +66,7 @@ func (c *controller) postLogin(gc *gin.Context) {
 
 	err = crypto.IsHashedPasswordCorrect(password, hashedPassword)
 	if err != nil {
-		logger.Error("Invalid login credentials")
+		logger.Info("Invalid login credentials")
 
 		gc.HTML(http.StatusBadRequest, loginHtml, gin.H{
 			errorKey:          wrongCredentialsErrMsg,
