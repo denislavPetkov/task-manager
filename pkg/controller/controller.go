@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/denislavpetkov/task-manager/pkg/crypto"
 	"go.uber.org/zap"
@@ -23,6 +24,8 @@ type Controller interface {
 
 type controller struct {
 	ginRouter *gin.Engine
+
+	openaiApiKey string
 
 	userDb userdb.Redis
 	taskDb taskdb.Mongodb
@@ -64,6 +67,8 @@ func (c *controller) Start() error {
 }
 
 func (c *controller) init() error {
+	c.openaiApiKey = os.Getenv(OPENAI_API_KEY)
+
 	c.initGin()
 
 	err := c.initRedis()
@@ -88,7 +93,7 @@ func (c *controller) init() error {
 func (c *controller) initGin() {
 	logger.Info("Initializating gin")
 
-	// gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 
 	c.ginRouter = gin.Default()
 

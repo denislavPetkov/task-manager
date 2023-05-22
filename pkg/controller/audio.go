@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/denislavpetkov/task-manager/pkg/nlp"
@@ -23,11 +22,10 @@ const (
 )
 
 func (c *controller) postAudio(gc *gin.Context) {
-	openaiApiKey := os.Getenv(OPENAI_API_KEY)
 
 	ctx := context.Background()
 
-	s := openai.NewSession(openaiApiKey)
+	s := openai.NewSession(c.openaiApiKey)
 	client := audio.NewClient(s, whisperModel)
 	resp, err := client.CreateTranscription(ctx, &audio.CreateTranscriptionParams{
 		Language:    whisperLanguage,
