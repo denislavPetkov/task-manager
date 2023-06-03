@@ -261,7 +261,7 @@
 		var task = tasks[index];
 
 		$.ajax({
-			url: window.location.href + '/completed/' + task.title,
+			url: window.location.href + '/complete/' + task.title,
 			type: 'POST',
 			headers: {
 				'X-CSRF-Token': "{{ .csrf }}"

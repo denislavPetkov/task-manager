@@ -7,7 +7,8 @@ const (
 	SessionUserKey   = "user"
 	SessionIdKey     = "id"
 	SessionStoreName = "session"
-	CookieUser       = "user"
+
+	CookieUser = "user"
 
 	PasswordRecoveryTokenExpiration = time.Minute * 5
 

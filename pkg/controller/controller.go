@@ -183,12 +183,11 @@ func (c *controller) registerPaths() {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 	})
 
-	c.ginRouter.POST("/audio", c.postAudio)
-
 	c.ginRouter.GET("/recoverPassword", c.getPasswordRecover)
 	c.ginRouter.POST("/recoverPassword", c.postPasswordRecover)
 
 	c.ginRouter.GET("/newPassword/:email", c.getNewPassword)
+
 	c.ginRouter.POST("/newPassword", c.postNewPassword)
 
 	c.ginRouter.GET("/register", c.getRegister)
@@ -201,13 +200,18 @@ func (c *controller) registerPaths() {
 	authenticated.Use(middleware.Authentication())
 	{
 
+		c.ginRouter.POST("/audio", c.postAudio)
+
 		authenticated.GET("/changePassword", c.getPasswordChange)
 		authenticated.POST("/changePassword", c.postPasswordChange)
 
 		authenticated.GET("/tasks/edit/:title", c.getUpdateTask)
 		authenticated.POST("/tasks/edit/:title", c.postUpdateTask)
+
 		authenticated.DELETE("/tasks/delete/:title", c.deleteTask)
-		authenticated.POST("/tasks/completed/:title", c.postCompleteTask)
+
+		authenticated.POST("/tasks/complete/:title", c.postCompleteTask)
+
 		authenticated.GET("/tasks", c.getTasks)
 
 		authenticated.GET("/tasks/new", c.getNewTask)

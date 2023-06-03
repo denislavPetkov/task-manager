@@ -76,6 +76,18 @@ func (c *controller) postLogin(gc *gin.Context) {
 		return
 	}
 
+	err = c.taskDb.CreateCollection(email)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to create a task collection, error: %v", err))
+
+		gc.HTML(http.StatusInternalServerError, loginHtml, gin.H{
+			errorKey:          serverErrorErrMsg,
+			constants.CsrfKey: csrfToken,
+		})
+
+		return
+	}
+
 	sessionToken, err := crypto.GenerateToken()
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to get session token, error: %v", err))
@@ -95,18 +107,6 @@ func (c *controller) postLogin(gc *gin.Context) {
 	err = session.Save()
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to save current session, error: %v", err))
-
-		gc.HTML(http.StatusInternalServerError, loginHtml, gin.H{
-			errorKey:          serverErrorErrMsg,
-			constants.CsrfKey: csrfToken,
-		})
-
-		return
-	}
-
-	err = c.taskDb.CreateCollection(email)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to create a task collection, error: %v", err))
 
 		gc.HTML(http.StatusInternalServerError, loginHtml, gin.H{
 			errorKey:          serverErrorErrMsg,
