@@ -75,7 +75,7 @@ func (c *controller) postPasswordRecover(gc *gin.Context) {
 		return
 	}
 
-	err = email.SendRecoveryEmail(userEmail, fmt.Sprintf("http://localhost:8081/newPassword/%s?%s=%s", emailBase64, recoveryTokenKey, recoveryToken))
+	err = email.SendRecoveryEmail(userEmail, fmt.Sprintf("http://localhost:30000/newPassword/%s?%s=%s", emailBase64, recoveryTokenKey, recoveryToken))
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to send password recovery email, error: %v", err))
 
