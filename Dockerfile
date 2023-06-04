@@ -14,10 +14,12 @@ RUN CGO_ENABLED=0 go build -o bin/task-manager
 
 FROM gcr.io/distroless/static
 
+WORKDIR /usr/local/bin
+
 COPY --from=build /go/task-manager/bin/task-manager /usr/local/bin/task-manager
 
-WORKDIR /usr/local/bin
+COPY static/ static/
 
 CMD ["task-manager"]
 
-USER nonroot:nonroot
+USER 65532:65532
