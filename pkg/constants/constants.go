@@ -3,7 +3,7 @@ package constants
 import "time"
 
 const (
-	SessionCookieTtl = 60000
+	SessionCookieTtl = 3600
 	SessionUserKey   = "user"
 	SessionIdKey     = "id"
 	SessionStoreName = "session"
