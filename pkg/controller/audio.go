@@ -39,9 +39,11 @@ func (c *controller) postAudio(gc *gin.Context) {
 	}
 
 	voiceCommand := strings.ToLower(resp.Text)
-	command := nlp.GetCommand(trimTaskTitle(voiceCommand))
+	trimmed := trimTaskTitle(voiceCommand)
+	command := nlp.GetCommand(trimmed)
 
 	logger.Info(fmt.Sprintf("Raw voice command: %s", voiceCommand))
+	logger.Info(fmt.Sprintf("Trimmed command: %s", trimmed))
 	logger.Info(fmt.Sprintf("Processed voice command: %v", command))
 
 	switch {
@@ -67,5 +69,5 @@ func (c *controller) postAudio(gc *gin.Context) {
 }
 
 func trimTaskTitle(s string) string {
-	return strings.Trim(strings.Trim(s, "."), ",")
+	return strings.ReplaceAll(strings.ReplaceAll(s, ".", ""), ",", "")
 }

@@ -114,7 +114,7 @@ func (c *controller) postNewTask(gc *gin.Context) {
 		return
 	}
 
-	title = strings.ReplaceAll(strings.Trim(title, " "), " ", "-")
+	title = strings.ToLower(title)
 
 	task := model.Task{
 		Title:                title,
